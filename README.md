@@ -1,6 +1,10 @@
 # scinobo-fos-classification
 This repository contains the code and the dockerfile for building the image and container responsible for the Field of Science classification of scientific publications.
 
+## Related publications
+- Nikolaos Gialitsis, Sotiris Kotitsas, and Haris Papageorgiou. 2022. SciNoBo: A Hierarchical Multi-Label Classifier of Scientific Publications. In Companion Proceedings of the Web Conference 2022 (WWW '22). Association for Computing Machinery, New York, NY, USA, 800–809. https://doi.org/10.1145/3487553.3524677
+- Kotitsas S, Pappas D, Manola N, Papageorgiou H. SCINOBO: a novel system classifying scholarly communication in a dynamically constructed hierarchical Field-of-Science taxonomy. Front Res Metr Anal. 2023 May 4;8:1149834. doi: 10.3389/frma.2023.1149834. PMID: 37215249; PMCID: PMC10192702.
+
 ## Contents of repository
 - input_files: Directory which contains test files for a demo. If you want to test the docker, then use this folder as the input volume to the docker when you run it. E.g. -v path/to/input_files:
 - Dockerfile: Contains the commands for building the docker
