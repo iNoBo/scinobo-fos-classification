@@ -1,0 +1,16 @@
+[
+    {
+        "pub_id": "doi/something else",
+        "pub_title": "A title",
+        "pub_abstract": "An abstract",
+        "published_venue": "the venue name",
+        "citation_venues": [
+            "venue 1",
+            "venue 2"
+        ],
+        "reference_venues": [
+            "venue 1",
+            "venue 2"
+        ]
+    }
+]
