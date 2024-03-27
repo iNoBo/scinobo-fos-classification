@@ -77,22 +77,22 @@ logger = logging.getLogger('inference')
 
 # rest of initializations
 logger.info('Initializing the venue parser')
-venue_parser = VenueParser(abbreviation_dict='../../data/venues_maps.p')
+venue_parser = VenueParser(abbreviation_dict='data/venues_maps.p')
 logger.info('Initializing the multigraph')
-multigraph = MultiGraph('../../data/scinobo_inference_graph.p')
+multigraph = MultiGraph('data/scinobo_inference_graph.p')
 logger.info('Initializing the text processor')
 text_processor = TextProcessor()
 # load mapping of the texonomy
 logger.info('Loading the mappings of the taxonomy')
 # load mappings
-with open('../../data/L2_to_L1.json', 'r') as fin:
+with open('data/L2_to_L1.json', 'r') as fin:
     L2_to_L1 = json.load(fin)
-with open('../../data/L3_to_L2.json', 'r') as fin:
+with open('data/L3_to_L2.json', 'r') as fin:
     L3_to_L2 = json.load(fin)
-with open('../../data/L4_to_L3.json', 'r') as fin:
+with open('data/L4_to_L3.json', 'r') as fin:
     L4_to_L3 = json.load(fin)
 
-level_4_names = load_excel('../../data/level_4_names.xlsx') # this is always in the repository -- no need to pass a path
+level_4_names = load_excel('data/level_4_names.xlsx') # this is always in the repository -- no need to pass a path
 level_4_ids_2_names = {level_4['Level 4']: level_4['Level 4 Name'] for level_4 in level_4_names}
 
 
