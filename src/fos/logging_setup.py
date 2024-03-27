@@ -40,8 +40,8 @@ def setup_root_logger():
     console = logging.StreamHandler()
     console.setFormatter(formatter)
     # check if the logs directory exists
-    os.makedirs("src/fos/logs", exist_ok=True)
-    file = logging.handlers.RotatingFileHandler(filename="src/fos/logs/fastapi-fos-logs.log", mode='a', maxBytes=15000000, backupCount=5)
+    os.makedirs("logs", exist_ok=True)
+    file = logging.handlers.RotatingFileHandler(filename="logs/fastapi-fos-logs.log", mode='a', maxBytes=15000000, backupCount=5)
     file.setFormatter(formatter)
     logger.addHandler(console)
     logger.addHandler(file)

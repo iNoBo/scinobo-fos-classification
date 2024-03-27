@@ -758,7 +758,7 @@ def process_pred(res, ftype, metadata=None, extra=False):
                             'L1': pr['L1'], 
                             'L2': pr['L2'], 
                             'L3': pr['L3'], 
-                            'L4': 'N/A' if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']], 
+                            'L4': None if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']], 
                             'L5': pr['L5'], 
                             'L6': pr['L6']    
                         } for pr in v[:2]
@@ -783,7 +783,7 @@ def process_pred(res, ftype, metadata=None, extra=False):
                                 'L1': pr['L1'], 
                                 'L2': pr['L2'], 
                                 'L3': pr['L3'], 
-                                'L4': 'N/A' if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']], 
+                                'L4': None if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']], 
                                 'L5': pr['L5'], 
                                 'L6': pr['L6']    
                             } for pr in v[:2]
@@ -812,7 +812,7 @@ def process_pred(res, ftype, metadata=None, extra=False):
                     'L1': pr['L1'],
                     'L2': pr['L2'],
                     'L3': pr['L3'],
-                    'L4': 'N/A' if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']],
+                    'L4': None if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']],
                     'L5': pr['L5'], 
                     'L6': pr['L6'],
                     'score_for_L3': pr['score_for_L3'],
@@ -827,7 +827,7 @@ def process_pred(res, ftype, metadata=None, extra=False):
                     'L1': pr['L1'],
                     'L2': pr['L2'],
                     'L3': pr['L3'],
-                    'L4': 'N/A' if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']],
+                    'L4': None if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']],
                     'L5': pr['L5'], 
                     'L6': pr['L6'],
                     'score_for_L3': pr['score_for_L3'],
