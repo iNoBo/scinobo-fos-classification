@@ -1,20 +1,13 @@
 [
     {
-        "pub_id": "the publication id",
-        "fos_predictions": [
-            {
-                "level_1": "level 1 fos",
-                "level_2": "level 2 fos",
-                "level_3": "level 3 fos",
-                "level_4": "level 4 fos",
-                "level_5": "level 5 fos",
-                "level_6": "level 6 fos"
-            }
-        ],
-        "fos_scores": {
-            "score_for_l3": 0.0,
-            "score_for_l4": 0.0,
-            "score_for_l5": 0.0
-        }
+        "id": "the id of the request",
+        "L1": "the L1 FoS pred",
+        "L2": "the L2 FoS pred",
+        "L3": "the L3 FoS pred",
+        "L4": "the L4 FoS pred",
+        "L5": "the L5 FoS pred", 
+        "L6": "the L6 FoS pred",
+        "score_for_L3": "the score for L3",
+        "score_for_L4": "the score for L4"
     }
 ]

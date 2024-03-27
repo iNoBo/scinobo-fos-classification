@@ -1,14 +1,14 @@
 [
     {
-        "pub_id": "doi/something else",
-        "pub_title": "A title",
-        "pub_abstract": "An abstract",
-        "published_venue": "the venue name",
-        "citation_venues": [
+        "id": "doi/something else",
+        "title": "A title",
+        "abstract": "An abstract",
+        "pub_venue": "the venue name",
+        "cit_venues": [
             "venue 1",
             "venue 2"
         ],
-        "reference_venues": [
+        "ref_venues": [
             "venue 1",
             "venue 2"
         ]
