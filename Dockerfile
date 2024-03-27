@@ -17,9 +17,13 @@ RUN mkdir /input_files
 RUN mkdir /output_files
 WORKDIR /app
 
-# download the scinobo inference graph and the graph embeddings
-# RUN wget https://www.dropbox.com/s/24meya731v5ub5d/graph_embeddings_with_L6_21_12_2022.p?dl=0 -O graph_embeddings_with_L6_21_12_2022.p
-# RUN wget https://www.dropbox.com/s/qr26k9zbwpeyoyz/scinobo_inference_graph.p?dl=0 -O scinobo_inference_graph.p
+# download the scinobo inference graph and the graph embeddings from HF organization
+# for passing secret arguments
+# https://huggingface.co/docs/hub/en/spaces-sdks-docker
+RUN --mount=type=secret,id=sotkot_hf_token,mode=0444,required=true \
+	wget --header="Authorization: Bearer $(cat /run/secrets/sotkot_hf_token)" <the URL> -O graph_embeddings_with_L6_21_12_2022.p
+RUN --mount=type=secret,id=sotkot_hf_token,mode=0444,required=true \
+	wget --header="Authorization: Bearer $(cat /run/secrets/sotkot_hf_token)" <the URL> -O scinobo_inference_graph.p
 
 COPY . /app
 

@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# large files
+graph_embeddings_with_L6_21_12_2022.p
+scinobo_inference_graph.p
+
 # C extensions
 *.so
 
