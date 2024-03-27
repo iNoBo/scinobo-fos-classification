@@ -85,7 +85,7 @@ class TextProcessor():
         self.bioclean = lambda t: re.sub('[.,?;*!%^&_+():-\[\]{}]', '',
                                      t.replace('"', '').replace('/', ' ').replace('\\', '').replace("'",
                                                                                                     '').strip().lower())                                                                                          
-        self.input_embeddings = 'src/fos/data/graph_embeddings_with_L6_21_12_2022.p'
+        self.input_embeddings = 'data/graph_embeddings_with_L6_21_12_2022.p'
         self.embeddings = self.load_embeddings()
         self.node2idx = {key: idx for idx, key in enumerate(self.embeddings.keys())}
         self.idx2node = {v: k for k, v in self.node2idx.items()}
