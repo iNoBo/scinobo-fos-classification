@@ -61,29 +61,12 @@ def load_excel(my_path):
     return level_4
 
 
-# parse args
-arguments = parse_args()
-
-# init the logger
-logging.basicConfig(
-    filename=arguments.log_path,
-    filemode='w',
-    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-    datefmt='%H:%M:%S',
-    level=logging.INFO
-)
-logging.info("Running FoS inference")
-logger = logging.getLogger('inference')
-
-# rest of initializations
-logger.info('Initializing the venue parser')
+# ----------------------------------------------------------#
+# initializations
 venue_parser = VenueParser(abbreviation_dict='data/venues_maps.p')
-logger.info('Initializing the multigraph')
 multigraph = MultiGraph('data/scinobo_inference_graph.p')
-logger.info('Initializing the text processor')
 text_processor = TextProcessor()
-# load mapping of the texonomy
-logger.info('Loading the mappings of the taxonomy')
+
 # load mappings
 with open('data/L2_to_L1.json', 'r') as fin:
     L2_to_L1 = json.load(fin)
@@ -94,6 +77,7 @@ with open('data/L4_to_L3.json', 'r') as fin:
 
 level_4_names = load_excel('data/level_4_names.xlsx') # this is always in the repository -- no need to pass a path
 level_4_ids_2_names = {level_4['Level 4']: level_4['Level 4 Name'] for level_4 in level_4_names}
+# ----------------------------------------------------------#
 
 
 def infer_relationship(multigraph, top_L3, top_L4, overwrite, relationship):
@@ -197,13 +181,12 @@ def add_to_predictions(tups, title, abstract):
     return final_tups
 
 
-def infer_l5_l6(tups, doi, title, abstract):
+def infer_l5_l6(tups, title, abstract):
     """
     Infers the L5/L6 categories based on the given inputs.
 
     Args:
         tups (list): A list of tuples containing L4 categories and their corresponding scores.
-        doi (str): The DOI (Digital Object Identifier) of the document.
         title (str): The title of the document.
         abstract (str): The abstract of the document.
 
@@ -215,14 +198,11 @@ def infer_l5_l6(tups, doi, title, abstract):
     if title != '' and abstract != '':
         preds = add_to_predictions(tups, title, abstract)
     elif title != '' and abstract == '':
-        logger.info(f'No abstract available for {doi}, infer only with title')
         preds = add_to_predictions(tups, title, '')
     elif title == '' and abstract != '':
-        logger.info(f'No title available for {doi}, infer only with abstract')
         preds = add_to_predictions(tups, '', abstract)
     else:
         # both are empty
-        logger.info(f'No title and abstract available for {doi}')
         preds = add_to_predictions(tups, '', '')
     return preds
 
@@ -275,16 +255,13 @@ def infer(**kwargs):
     titles = kwargs['payload']['titles']
     abstracts = kwargs['payload']['abstracts']
     # add the publications to the graph that we are going to infer
-    logger.info('Adding publications to the graph')
     add(multigraph, published_venues, cit_ref_venues)
     # inferring relationships
-    logger.info('Inferring relationships')
     _ = [
         infer_relationship(ids, multigraph, top_L1, top_L2, top_L3, top_L4, overwrite=True, relationship='cites'),
         infer_relationship(ids, multigraph, top_L1, top_L2, top_L3, top_L4, overwrite=False, relationship='published')
     ]
     out = {}
-    logger.info('Retrieving results for publications')
     all_l3s = [(relationship[0], relationship[1], relationship[2]) for relationship in multigraph.edges(data='in_L3', nbunch=ids) if relationship[2]]
     all_l4s = [(relationship[0], relationship[1], relationship[2]) for relationship in multigraph.edges(data='in_L4', nbunch=ids) if relationship[2]]
     # aggregate to relationship[0] which is the id
@@ -292,7 +269,6 @@ def infer(**kwargs):
     all_l4s = {k: [(i[1],i[2]) for i in list(v)] for k, v in groupby(all_l4s, key=lambda x: x[0])}
     ########################################
     # clean the graph from the dois that where inferred
-    logger.info('Cleaning the graph from the inferred nodes')
     multigraph.remove_nodes_from(ids)
     ########################################
     for doi in tqdm(ids, desc='Infer L5/L6'):
@@ -341,7 +317,7 @@ def infer(**kwargs):
             ############################################
             # infer L5 and L6
             if not only_l4:
-                my_triplets = infer_l5_l6(my_triplets, doi, titles[doi], abstracts[doi])
+                my_triplets = infer_l5_l6(my_triplets, titles[doi], abstracts[doi])
             else:
                 my_triplets = [(tup[0], tup[1], tup[2], tup[3], None, None) if len(tup) > 3 else (tup[0], tup[1], tup[2], None, None, None) for tup in my_triplets]
             out[doi] = [
@@ -381,7 +357,6 @@ def infer(**kwargs):
             if not only_l4:
                 my_tups = infer_l5_l6(
                     my_tups,
-                    doi,
                     titles[doi],
                     abstracts[doi]
                 )
@@ -678,11 +653,9 @@ def create_payload(dato):
     for d in tqdm(dato, desc='Creating payload for inference'):
         # input checks
         if 'id' not in d:
-            logger.info('publication without id, skipping ...')
             continue
         my_id = d['id']
         if 'cit_venues' not in d and 'ref_venues' not in d:
-            logger.info(f'publication with {my_id} has no cit_venues and ref_venues, skipping ...')
             continue
         elif 'cit_venues' in d and 'ref_venues' not in d:
             cit_venues = d['cit_venues']
@@ -692,7 +665,6 @@ def create_payload(dato):
             cit_venues = d['cit_venues']
             ref_venues = d['ref_venues']
         if 'pub_venue' not in d:
-            logger.info(f'publication with {my_id} has no pub_venue, leaving this field empty')
             pub_venue = ''
         else:
             pub_venue_res = venue_parser.preprocess_venue(d['pub_venue'])
@@ -887,7 +859,19 @@ def save_pred(res, ftype, opath):
         pq.write_table(table, opath)
 
 
-if __name__ == '__main__':
+def main():
+    # parse args
+    arguments = parse_args()
+    # init the logger
+    logging.basicConfig(
+        filename=arguments.log_path,
+        filemode='w',
+        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+        datefmt='%H:%M:%S',
+        level=logging.INFO
+    )
+    logging.info("Running FoS inference")
+    logger = logging.getLogger('inference')
     # create the output directory
     logger.info('Creating the output directory: {}'.format(arguments.out_path))
     os.makedirs(arguments.out_path, exist_ok=True)
@@ -936,3 +920,7 @@ if __name__ == '__main__':
         logger.info(f'Dumping the predictions for the file with index: {idx} and file name: {file_name}')
         output_file_name = os.path.join(arguments.out_path, file_name)
         save_pred(chunk_predictions, arguments.file_type, output_file_name)
+        
+        
+if __name__ == '__main__':
+    main()
