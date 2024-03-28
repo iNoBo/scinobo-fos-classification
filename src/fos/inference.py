@@ -22,7 +22,6 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import distutils.util
 
-from pprint import pprint
 from tqdm import tqdm
 from collections import Counter
 from venue_parser import VenueParser
@@ -243,7 +242,6 @@ def infer(**kwargs):
     top_L3 = kwargs.get('top_L3', 3)
     top_L4 = kwargs.get('top_L4', 4)
     # other variables
-    kwargs.get('emphasize', 'citations')
     only_l4 = kwargs.get('only_l4', False)
     # return_triplets = kwargs.get('return_triplets', True)
     # ids of publications
@@ -514,74 +512,6 @@ def filter_level_5(canditate_l5, my_graph, my_hits, only_text=False):
             final_ranking.append((l5, total_score, kws))
         my_res = sorted(final_ranking, key=lambda x: x[1], reverse=True)[:3]
         return my_res
-
-
-def test():
-    # initializations
-    my_venue_parser = VenueParser(abbreviation_dict='venues_maps.p')
-    multigraph = MultiGraph('scinobo_inference_graph.p')
-    text_processor = TextProcessor()
-    my_title = """Embedding Biomedical Ontologies by Jointly Encoding Network Structure and Textual Node Descriptors"""
-    my_abstract = """Network Embedding (NE) methods, which
-    map network nodes to low-dimensional feature vectors, have wide applications in network analysis and bioinformatics. Many existing NE methods rely only on network structure, overlooking other information associated
-    with the nodes, e.g., text describing the nodes.
-    Recent attempts to combine the two sources of
-    information only consider local network structure. We extend NODE2VEC, a well-known NE
-    method that considers broader network structure, to also consider textual node descriptors
-    using recurrent neural encoders. Our method
-    is evaluated on link prediction in two networks derived from UMLS. Experimental results demonstrate the effectiveness of the proposed approach compared to previous work."""
-
-    payload = {
-        "doi": "10.18653/v1/w19-5032",
-        "doi_cites_venues": {
-            "10.18653/v1/w19-5032": {
-                "acl": 2,
-                "aimag": 1,
-                "arxiv artificial intelligence": 1,
-                "arxiv computation and language": 2,
-                "arxiv machine learning": 1,
-                "arxiv social and information networks": 1,
-                "briefings in bioinformatics": 1,
-                "comparative and functional genomics": 1,
-                "conference of the european chapter of the association for computational linguistics": 1,
-                "cvpr": 1,
-                "emnlp": 3,
-                "eswc": 1,
-                "iclr": 2,
-                "icml": 1,
-                "ieee trans signal process": 1,
-                "j mach learn res": 1,
-                "kdd": 4,
-                "naacl": 1,
-                "nips": 1,
-                "nucleic acids res": 1,
-                "pacific symposium on biocomputing": 3,
-                "physica a statistical mechanics and its applications": 1,
-                "proceedings of the acm conference on bioinformatics computational biology and health informatics": 1,
-                "sci china ser f": 1,
-                "the web conference": 1
-            }
-        },
-        "doi_publish_venue": {
-            "10.18653/v1/w19-5032": {
-                "proceedings of the bionlp workshop and shared task": 1
-            }
-        },
-        "emphasize": "citations"
-    }
-
-    my_res = infer(payload, multigraph, my_venue_parser)
-    my_l4 = my_res["10.18653/v1/w19-5032"][0]['L4'] if 'L4' in my_res["10.18653/v1/w19-5032"][0] else None
-    if my_l4 is None:
-        return
-    title = text_processor.preprocess_text(my_title)
-    abstract = text_processor.preprocess_text(my_abstract)
-    my_text = title + ' ' + abstract
-    my_l5s = [node[0] for node in multigraph.nodes(data='L5') if node[1] and my_l4 in node[0]]
-    l5s = filter_level_5(
-        my_text, my_l5s, False, 5, text_processor, multigraph, only_text=False
-    )
-    pprint(l5s)
 
 
 def yielder_json(input_dir, files):
