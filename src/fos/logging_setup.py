@@ -18,6 +18,9 @@ Example:
 import logging
 import os
 
+from logging.handlers import RotatingFileHandler
+from _import_utils import LOGGING_PATH
+
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 
@@ -40,8 +43,8 @@ def setup_root_logger():
     console = logging.StreamHandler()
     console.setFormatter(formatter)
     # check if the logs directory exists
-    os.makedirs("logs", exist_ok=True)
-    file = logging.handlers.RotatingFileHandler(filename="logs/fastapi-fos-logs.log", mode='a', maxBytes=15000000, backupCount=5)
+    os.makedirs(LOGGING_PATH, exist_ok=True)
+    file = RotatingFileHandler(filename=os.path.join(LOGGING_PATH, "fastapi-fos-logs.log"), mode='a', maxBytes=15000000, backupCount=5)
     file.setFormatter(formatter)
     logger.addHandler(console)
     logger.addHandler(file)

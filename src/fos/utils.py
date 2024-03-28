@@ -33,6 +33,7 @@ from nltk.corpus import stopwords
 from nltk.util import ngrams
 from sentence_transformers import SentenceTransformer, util
 from sklearn.cluster import AgglomerativeClustering
+from _import_utils import DATA_PATH
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
@@ -75,7 +76,7 @@ class TextProcessor():
             self.device = 'cpu'
         print(f'Using device: {self.device}')
         self.cwd = os.getcwd()
-        self.embedder = SentenceTransformer('all-mpnet-base-v2', device=self.device, cache_folder=self.cwd)
+        self.embedder = SentenceTransformer('all-mpnet-base-v2', device=self.device, cache_folder=DATA_PATH)
         self.spacy_model = spacy.load("en_core_web_sm")
         self.lemmatizer_to_use = my_lemmatizer
         if self.lemmatizer_to_use == 'spacy':
@@ -85,7 +86,7 @@ class TextProcessor():
         self.bioclean = lambda t: re.sub('[.,?;*!%^&_+():-\[\]{}]', '',
                                      t.replace('"', '').replace('/', ' ').replace('\\', '').replace("'",
                                                                                                     '').strip().lower())                                                                                          
-        self.input_embeddings = 'data/graph_embeddings_with_L6_21_12_2022.p'
+        self.input_embeddings = os.path.join(DATA_PATH, 'graph_embeddings_with_L6_21_12_2022.p')
         self.embeddings = self.load_embeddings()
         self.node2idx = {key: idx for idx, key in enumerate(self.embeddings.keys())}
         self.idx2node = {v: k for k, v in self.node2idx.items()}

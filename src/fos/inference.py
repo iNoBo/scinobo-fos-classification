@@ -28,6 +28,7 @@ from venue_parser import VenueParser
 from multigraph import MultiGraph
 from utils import TextProcessor
 from itertools import groupby
+from _import_utils import DATA_PATH
 
 
 def parse_args():
@@ -62,19 +63,19 @@ def load_excel(my_path):
 
 # ----------------------------------------------------------#
 # initializations
-venue_parser = VenueParser(abbreviation_dict='data/venues_maps.p')
-multigraph = MultiGraph('data/scinobo_inference_graph.p')
+venue_parser = VenueParser(abbreviation_dict=os.path.join(DATA_PATH, 'venues_maps.p'))
+multigraph = MultiGraph(os.path.join(DATA_PATH, 'scinobo_inference_graph.p'))
 text_processor = TextProcessor()
 
 # load mappings
-with open('data/L2_to_L1.json', 'r') as fin:
+with open(os.path.join(DATA_PATH, 'L2_to_L1.json'), 'r') as fin:
     L2_to_L1 = json.load(fin)
-with open('data/L3_to_L2.json', 'r') as fin:
+with open(os.path.join(DATA_PATH, 'L3_to_L2.json'), 'r') as fin:
     L3_to_L2 = json.load(fin)
-with open('data/L4_to_L3.json', 'r') as fin:
+with open(os.path.join(DATA_PATH, 'L4_to_L3.json'), 'r') as fin:
     L4_to_L3 = json.load(fin)
 
-level_4_names = load_excel('data/level_4_names.xlsx') # this is always in the repository -- no need to pass a path
+level_4_names = load_excel(os.path.join(DATA_PATH, 'level_4_names.xlsx')) # this is always in the repository -- no need to pass a path
 level_4_ids_2_names = {level_4['Level 4']: level_4['Level 4 Name'] for level_4 in level_4_names}
 # ----------------------------------------------------------#
 
