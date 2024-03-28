@@ -240,8 +240,6 @@ def infer(**kwargs):
             - score_for_L5 (float): The score for the top-level 5 relationship.
     """
     # defaults
-    top_L1 = kwargs.get('top_L1', 1)
-    top_L2 = kwargs.get('top_L2', 2)
     top_L3 = kwargs.get('top_L3', 3)
     top_L4 = kwargs.get('top_L4', 4)
     # other variables
@@ -258,8 +256,8 @@ def infer(**kwargs):
     add(multigraph, published_venues, cit_ref_venues)
     # inferring relationships
     _ = [
-        infer_relationship(ids, multigraph, top_L1, top_L2, top_L3, top_L4, overwrite=True, relationship='cites'),
-        infer_relationship(ids, multigraph, top_L1, top_L2, top_L3, top_L4, overwrite=False, relationship='published')
+        infer_relationship(multigraph, top_L3, top_L4, overwrite=True, relationship='cites'),
+        infer_relationship(multigraph, top_L3, top_L4, overwrite=False, relationship='published')
     ]
     out = {}
     all_l3s = [(relationship[0], relationship[1], relationship[2]) for relationship in multigraph.edges(data='in_L3', nbunch=ids) if relationship[2]]
@@ -723,7 +721,7 @@ def create_payload(dato):
     return payload
 
 
-def process_pred(res, ftype, metadata=None, extra=False):
+def process_pred(res, ftype="parquet", metadata=None, extra=False):
     """
     Process the predictions and generate a list of dictionaries containing the processed results.
 
