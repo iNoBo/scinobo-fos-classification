@@ -28,7 +28,7 @@ RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c
 
 # COPY DESCRIPTIONS
 # install dependencies
-RUN pip3 install -r requirements.txt
+RUN python3 -m pip install -r requirements.txt
 
 # download spacy model
 RUN python3 -m spacy download en_core_web_sm
