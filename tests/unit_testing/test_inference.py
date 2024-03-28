@@ -17,7 +17,7 @@ We will test the following:
 
 import unittest
 from fos.inference import infer, infer_relationship, infer_l5_l6, create_payload
-from fos.multigraph import MultiGraph
+from fos.graph_utils import MyMultiGraph
 
 
 class InferenceTestCase(unittest.TestCase):
@@ -51,12 +51,12 @@ class InferenceTestCase(unittest.TestCase):
 
     def test_infer_relationship(self):
         # Test infer_relationship function with sample data
-        multigraph = MultiGraph()
-        multigraph.add_node("doi1", "venue1", "L4_1")
-        multigraph.add_node("doi2", "venue2", "L4_2")
-        infer_relationship(multigraph, top_L3=2, top_L4=3, overwrite=True, relationship="cites")
-        self.assertEqual(multigraph.get_relationships("doi1", "venue1", "L4_1"), [("cites", "in_L4", "doi2", "venue2", "L4_2")])
-        self.assertEqual(multigraph.get_relationships("doi2", "venue2", "L4_2"), [])
+        my_graph = MyMultiGraph()
+        my_graph.add_node("doi1", "venue1", "L4_1")
+        my_graph.add_node("doi2", "venue2", "L4_2")
+        infer_relationship(my_graph, top_L3=2, top_L4=3, overwrite=True, relationship="cites")
+        self.assertEqual(my_graph.get_relationships("doi1", "venue1", "L4_1"), [("cites", "in_L4", "doi2", "venue2", "L4_2")])
+        self.assertEqual(my_graph.get_relationships("doi2", "venue2", "L4_2"), [])
 
     def test_infer_l5_l6(self):
         # Test infer_l5_l6 function with sample data

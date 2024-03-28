@@ -1,5 +1,5 @@
 """ 
-This script is used to test the multigraph class in the fos package.
+This script is used to test the my_graph class in the fos package.
 We will test the following:
     - test the add_entities function --> adds all the entities, 
     adds the relationships, the scores are normalized and correct
@@ -8,12 +8,12 @@ We will test the following:
 
 import unittest
 
-from fos.multigraph import MultiGraph
+from fos.graph_utils import MyMultiGraph
 
 
 class TestMultiGraph(unittest.TestCase):
     def setUp(self):
-        self.graph = MultiGraph() # create an empty graph
+        self.graph = MyMultiGraph() # create an empty graph
 
     def test_add_entities(self):
         # Test adding entities and relationships

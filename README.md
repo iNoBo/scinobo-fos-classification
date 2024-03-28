@@ -11,7 +11,7 @@ This repository contains the code and the dockerfile for building the image and 
 - L3_to_L2.json: Mapping from the L3 FoS fields to L2
 - L3_to_L4.json: Mapping from the L3 FoS fields to L4
 - L4_to_L3.json: Mapping from the L4 FoS fields to L3
-- multigraph.py: Contains the code for managing the inference graph of SciNoBo
+- my_graph.py: Contains the code for managing the inference graph of SciNoBo
 - output_schema.json: Contains the output schema of the predictions
 - requirements.txt: The python packages required.
 - scinobo_inference_graph.p: The SciNoBo inference graph

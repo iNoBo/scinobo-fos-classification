@@ -2,6 +2,14 @@ FROM continuumio/miniconda3:24.1.2-0
 
 RUN chmod 1777 /tmp
 
+WORKDIR /app/src/fos/data/
+
+# handle the large files for the inference graph
+ARG HF_TOKEN
+# download the scinobo inference graph and the graph embeddings from HF organization
+RUN wget --header="Authorization: Bearer ${HF_TOKEN}" https://huggingface.co/datasets/iNoBo/scinobo-fos-graph-embeddings/resolve/main/graph_embeddings_with_L6_21_12_2022.p?download=true -O graph_embeddings_with_L6_21_12_2022.p
+RUN wget --header="Authorization: Bearer ${HF_TOKEN}" https://huggingface.co/datasets/iNoBo/scinobo-fos-inference-graph/resolve/main/scinobo_inference_graph.p?download=true -O scinobo_inference_graph.p
+
 WORKDIR /app
 
 # Copy only the requirements file, to cache the installation of dependencies
@@ -36,15 +44,10 @@ RUN mkdir /output_files
 # Expose the port the app runs on
 EXPOSE 1997
 
-# download the scinobo inference graph and the graph embeddings from HF organization
-# for passing secret arguments
-# https://huggingface.co/docs/hub/en/spaces-sdks-docker
-RUN --mount=type=secret,id=sotkot_hf_token,mode=0444,required=true \
-	wget --header="Authorization: Bearer $(cat /run/secrets/sotkot_hf_token)" https://huggingface.co/datasets/iNoBo/scinobo-fos-graph-embeddings/resolve/main/graph_embeddings_with_L6_21_12_2022.p?download=true -O graph_embeddings_with_L6_21_12_2022.p
-RUN --mount=type=secret,id=sotkot_hf_token,mode=0444,required=true \
-	wget --header="Authorization: Bearer $(cat /run/secrets/sotkot_hf_token)" https://huggingface.co/datasets/iNoBo/scinobo-fos-inference-graph/resolve/main/scinobo_inference_graph.p?download=true -O scinobo_inference_graph.p
+# change the working directory
+WORKDIR /src
 
-COPY . /app
+COPY ./src .
 
 # ENTRYPOINT ["python3", "inference.py"]
 # Initialize

@@ -19,7 +19,7 @@ import logging
 import os
 
 from logging.handlers import RotatingFileHandler
-from _import_utils import LOGGING_PATH
+from fos._import_utils import LOGGING_PATH
 
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"

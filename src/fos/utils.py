@@ -33,7 +33,7 @@ from nltk.corpus import stopwords
 from nltk.util import ngrams
 from sentence_transformers import SentenceTransformer, util
 from sklearn.cluster import AgglomerativeClustering
-from _import_utils import DATA_PATH
+from fos._import_utils import DATA_PATH
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"

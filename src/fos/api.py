@@ -7,11 +7,12 @@ FastAPI for the FoS classifier. This docstring will be updated.
 import logging
 import traceback
 
-from logging_setup import setup_root_logger 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from inference import create_payload, infer, process_pred
+
+from fos.logging_setup import setup_root_logger
+from fos.inference import create_payload, infer, process_pred
 
 # init the logger
 setup_root_logger()

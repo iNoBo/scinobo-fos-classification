@@ -24,11 +24,12 @@ import distutils.util
 
 from tqdm import tqdm
 from collections import Counter
-from venue_parser import VenueParser
-from multigraph import MultiGraph
-from utils import TextProcessor
 from itertools import groupby
-from _import_utils import DATA_PATH
+
+from fos.venue_parser import VenueParser
+from fos.graph_utils import MyMultiGraph
+from fos.utils import TextProcessor
+from fos._import_utils import DATA_PATH
 
 
 def parse_args():
@@ -64,7 +65,7 @@ def load_excel(my_path):
 # ----------------------------------------------------------#
 # initializations
 venue_parser = VenueParser(abbreviation_dict=os.path.join(DATA_PATH, 'venues_maps.p'))
-multigraph = MultiGraph(os.path.join(DATA_PATH, 'scinobo_inference_graph.p'))
+my_graph = MyMultiGraph(os.path.join(DATA_PATH, 'scinobo_inference_graph.p'))
 text_processor = TextProcessor()
 
 # load mappings
@@ -80,11 +81,11 @@ level_4_ids_2_names = {level_4['Level 4']: level_4['Level 4 Name'] for level_4 i
 # ----------------------------------------------------------#
 
 
-def infer_relationship(multigraph, top_L3, top_L4, overwrite, relationship):
+def infer_relationship(my_graph, top_L3, top_L4, overwrite, relationship):
     """
-    Infer the relationship between entities in the multigraph.
+    Infer the relationship between entities in the my_graph.
     Args:
-        multigraph (Multigraph): The multigraph containing the entities.
+        my_graph (my_graph): The my_graph containing the entities.
         top_L3 (int): The maximum number of links to infer for entities in L3 layer.
         top_L4 (int): The maximum number of links to infer for entities in L4 layer.
         overwrite (bool): Flag indicating whether to overwrite existing links.
@@ -93,9 +94,9 @@ def infer_relationship(multigraph, top_L3, top_L4, overwrite, relationship):
     Returns:
         None
     """
-    multigraph.infer_layer(entity_chain=["doi", "venue", "L4"], relationship_chain=[relationship, "in_L4"],
+    my_graph.infer_layer(entity_chain=["doi", "venue", "L4"], relationship_chain=[relationship, "in_L4"],
                             overwrite=overwrite, max_links=top_L4)
-    multigraph.infer_layer(entity_chain=["doi", "venue", "L3"], relationship_chain=[relationship, "in_L3"],
+    my_graph.infer_layer(entity_chain=["doi", "venue", "L3"], relationship_chain=[relationship, "in_L3"],
                             overwrite=overwrite, max_links=top_L3)
 
 
@@ -150,10 +151,10 @@ def add_to_predictions(tups, title, abstract):
         return []
     my_unigrams, bi_tri_grams = res
     all_hits = set(my_unigrams) | bi_tri_grams
-    all_l5s = [node[0] for node in multigraph.nodes(data='L5') if node[1] and any([t[3][0] in node[0] for t in tups if len(t) > 3])]
+    all_l5s = [node[0] for node in my_graph.nodes(data='L5') if node[1] and any([t[3][0] in node[0] for t in tups if len(t) > 3])]
     l5s = filter_level_5(
         all_l5s,
-        multigraph,
+        my_graph,
         all_hits,
         only_text=False
     )
@@ -252,21 +253,21 @@ def infer(**kwargs):
     titles = kwargs['payload']['titles']
     abstracts = kwargs['payload']['abstracts']
     # add the publications to the graph that we are going to infer
-    add(multigraph, published_venues, cit_ref_venues)
+    add(my_graph, published_venues, cit_ref_venues)
     # inferring relationships
     _ = [
-        infer_relationship(multigraph, top_L3, top_L4, overwrite=True, relationship='cites'),
-        infer_relationship(multigraph, top_L3, top_L4, overwrite=False, relationship='published')
+        infer_relationship(my_graph, top_L3, top_L4, overwrite=True, relationship='cites'),
+        infer_relationship(my_graph, top_L3, top_L4, overwrite=False, relationship='published')
     ]
     out = {}
-    all_l3s = [(relationship[0], relationship[1], relationship[2]) for relationship in multigraph.edges(data='in_L3', nbunch=ids) if relationship[2]]
-    all_l4s = [(relationship[0], relationship[1], relationship[2]) for relationship in multigraph.edges(data='in_L4', nbunch=ids) if relationship[2]]
+    all_l3s = [(relationship[0], relationship[1], relationship[2]) for relationship in my_graph.edges(data='in_L3', nbunch=ids) if relationship[2]]
+    all_l4s = [(relationship[0], relationship[1], relationship[2]) for relationship in my_graph.edges(data='in_L4', nbunch=ids) if relationship[2]]
     # aggregate to relationship[0] which is the id
     all_l3s = {k: [(i[1],i[2]) for i in list(v)] for k, v in groupby(all_l3s, key=lambda x: x[0])}
     all_l4s = {k: [(i[1],i[2]) for i in list(v)] for k, v in groupby(all_l4s, key=lambda x: x[0])}
     ########################################
     # clean the graph from the dois that where inferred
-    multigraph.remove_nodes_from(ids)
+    my_graph.remove_nodes_from(ids)
     ########################################
     for doi in tqdm(ids, desc='Infer L5/L6'):
         if doi not in all_l3s and doi not in all_l4s:
@@ -378,20 +379,20 @@ def infer(**kwargs):
     return out
 
 
-def add(multigraph, published_venues, cit_ref_venues):
+def add(my_graph, published_venues, cit_ref_venues):
     """
-    Adds entities and relationships to the multigraph.
+    Adds entities and relationships to the my_graph.
 
     Args:
-        multigraph (Multigraph): The multigraph to add entities and relationships to.
+        my_graph (my_graph): The my_graph to add entities and relationships to.
         published_venues: A list of tuples representing the published venues.
             Each tuple contains a DOI and a venue name.
         cit_ref_venues: A list of tuples representing the cited/referenced venues.
             Each tuple contains a DOI and a venue name.
     """
-    multigraph.add_entities(from_entities="doi", to_entities="venue", relationship_type="published",
+    my_graph.add_entities(from_entities="doi", to_entities="venue", relationship_type="published",
                             relationships=published_venues)
-    multigraph.add_entities(from_entities="doi", to_entities="venue", relationship_type="cites",
+    my_graph.add_entities(from_entities="doi", to_entities="venue", relationship_type="cites",
                             relationships=cit_ref_venues)
 
 
