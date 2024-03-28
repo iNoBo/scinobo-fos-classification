@@ -138,6 +138,13 @@ async def log_requests(request, call_next):
     return response
 
 
+# create an endpoint which receives a request and just returns the request data
+@app.post("/echo", response_model=FoSInferRequests, responses={400: {"model": ErrorResponse}})
+def echo(request_data: FoSInferRequests):
+    LOGGER.info(f"Request data for echo: {request_data}")
+    return request_data.model_dump() 
+
+
 @app.post("/infer_fos", response_model=FoSInferRequestsResponse, responses={400: {"model": ErrorResponse}})
 def infer_publications(request_data: FoSInferRequests):
     # TODO: update the docstring, to be more informative.
