@@ -1,0 +1,16 @@
+[
+    {
+        "id": "doi/something else",
+        "title": "A title",
+        "abstract": "An abstract",
+        "pub_venue": "the venue name",
+        "cit_venues": [
+            "venue 1",
+            "venue 2"
+        ],
+        "ref_venues": [
+            "venue 1",
+            "venue 2"
+        ]
+    }
+]

@@ -1,18 +1,22 @@
 """
-
-This module contains functions for preprocessing data.
-
+This script contains a TextProcessor class that provides functions for preprocessing text data. 
+It also includes methods for word lemmatization, n-gram generation, similarity retrieval, and keyword clustering.
+The TextProcessor class initializes with a set of filters for text preprocessing and a choice of lemmatizer (either 'spacy' or 'wordnet'). 
+It also loads pre-trained word embeddings and initializes a sentence transformer model for encoding text.
+The class provides methods for preprocessing text, including removing stopwords, punctuation, and multiple whitespaces. 
+It also supports word lemmatization using either the spaCy library or the WordNet lemmatizer.
+Other methods in the class include generating n-grams from text, retrieving similar nodes based on a query, and clustering keywords using agglomerative clustering.
+Note: This script requires the installation of various libraries such as spacy, nltk, gensim, sentence_transformers, and scikit-learn.
 """
 
 import os
-import json
 import pickle
-import pandas as pd
 import numpy as np
 import re
 import pycountry
 import nltk
 import torch
+import importlib.resources
 
 # this is for blocking tensorflow -- it reserves all the gpu memory for some reason
 # os.environ["CUDA_VISIBLE_DEVICES"] = "" 
@@ -20,8 +24,7 @@ import torch
 import spacy
 
 from nltk.stem import WordNetLemmatizer
-from tqdm import tqdm
-from gensim.parsing.preprocessing import preprocess_string, strip_multiple_whitespaces, remove_stopwords, strip_punctuation
+from gensim.parsing.preprocessing import preprocess_string, strip_multiple_whitespaces, strip_punctuation
 
 # download stopwords
 # nltk.download('stopwords')
@@ -35,12 +38,29 @@ from sklearn.cluster import AgglomerativeClustering
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1" 
+DATA_PATH = os.path.join(importlib.resources.files(__package__.split(".")[0]), "data")
 
 
 class TextProcessor():
-    """Class for text processing."""
+    """
+    A class that provides text processing functionalities including preprocessing, lemmatization, and similarity retrieval.
+
+    Attributes:
+        filters (list): A list of functions representing the text preprocessing filters.
+        my_lemmatizer (str): The lemmatizer to use ('spacy' or 'wordnet').
+        device (str): The device to use for embedding computation ('cuda:0' if CUDA is available, 'cpu' otherwise).
+        cwd (str): The current working directory.
+        embedder (SentenceTransformer): The SentenceTransformer model for generating text embeddings.
+        spacy_model (spacy.Language): The Spacy language model for lemmatization.
+        lemmatizer_to_use (str): The lemmatizer to use ('spacy' or 'wordnet').
+        bioclean (function): A function for cleaning text by removing special characters and whitespaces.
+        input_embeddings (str): The file path to the input embeddings.
+        embeddings (torch.Tensor): The loaded embeddings as a tensor.
+        node2idx (dict): A dictionary mapping node names to their corresponding indices.
+        idx2node (dict): A dictionary mapping indices to their corresponding node names.
+        my_stopwords (set): A set of stopwords to be used for text preprocessing.
+    """
     def __init__(self, filters=None, my_lemmatizer='spacy'):
-        """Initialize the class."""
         if filters is not None:
             self.filters = filters
         else:
@@ -51,39 +71,34 @@ class TextProcessor():
                 strip_punctuation,
                 strip_multiple_whitespaces
             ]
-        
         if torch.cuda.is_available():
             self.device = f'cuda:{0}'
         else:
             self.device = 'cpu'
         print(f'Using device: {self.device}')
         self.cwd = os.getcwd()
-        self.embedder = SentenceTransformer(f'all-mpnet-base-v2', device=self.device, cache_folder=self.cwd)
+        self.embedder = SentenceTransformer('all-mpnet-base-v2', device=self.device, cache_folder=DATA_PATH)
         self.spacy_model = spacy.load("en_core_web_sm")
         self.lemmatizer_to_use = my_lemmatizer
         if self.lemmatizer_to_use == 'spacy':
             self.lemmatizer = self.spacy_model
         else:
             self.lemmatizer = WordNetLemmatizer()
-        
         self.bioclean = lambda t: re.sub('[.,?;*!%^&_+():-\[\]{}]', '',
                                      t.replace('"', '').replace('/', ' ').replace('\\', '').replace("'",
-                                                                                                    '').strip().lower())
-                                                                                                  
-        self.input_embeddings = 'graph_embeddings_with_L6_21_12_2022.p'
+                                                                                                    '').strip().lower())                                                                                          
+        self.input_embeddings = os.path.join(DATA_PATH, 'graph_embeddings_with_L6_21_12_2022.p')
         self.embeddings = self.load_embeddings()
         self.node2idx = {key: idx for idx, key in enumerate(self.embeddings.keys())}
         self.idx2node = {v: k for k, v in self.node2idx.items()}
 
         # convert self.input_embeddings to a tensor
         self.embeddings = torch.tensor(list(self.embeddings.values()), device=self.device)
-
         my_langs = [
             'de', 'it', 'cs', 'da', 'lv', 'es', 'fr', 'bg', 'pl', 'nl', 'el', 'fi', 'sv', 'ro', 'ga', 'hu',
             'sk', 'hr', 'pt', 'no', 'sl', 'lt', 'lb', 'et', 'mt', 'so', 'he', 'tr', 'ru', 'th',
             'fa', 'ar', 'hi', 'af', 'sq', 'sw', 'ca', 'zh', 'mk', 'ko', 'ur', 'ml', 'vi', 'uk', 'id', 'bn', 'tl', 'ja'
         ]
-
         # add self.my_stopwords to the list of stopwords
         self.my_stopwords = set(stopwords.words('english'))
         self.my_stopwords.add('et al')
@@ -178,25 +193,77 @@ class TextProcessor():
         self.my_stopwords.update([cntr.alpha_3.lower() for cntr in pycountry.countries])
 
     def load_embeddings(self):
+        """
+        Load the embeddings from the input file.
+
+        Returns:
+            embeddings (object): The loaded embeddings.
+        """
         with open(self.input_embeddings, 'rb') as fin:
             embeddings = pickle.load(fin)
         return embeddings
 
     def preprocess(self, x):
-        """Preprocess text."""
+        """
+        Preprocesses the input text by removing HTML tags, special characters, and extra whitespaces.
+
+        Args:
+            x (str): The input text to be preprocessed.
+
+        Returns:
+            str: The preprocessed text with HTML tags, special characters, and extra whitespaces removed.
+        """
         return re.sub(r'\s+', ' ', re.sub(r'&.*?;(?:\w*;|#|/?(?:span|p|strong))*', ' ', re.sub(r'<.*?>', ' ', x))).strip()
     
     def wordnet_lemmatize(self, x):
+        """
+        Lemmatizes a word using WordNet lemmatizer.
+
+        Parameters:
+        x (str): The word to be lemmatized.
+
+        Returns:
+        str: The lemmatized word.
+        """
         return self.lemmatizer.lemmatize(x)
     
     def spacy_lemmatizer(self, x):
+        """
+        Lemmatizes the input text using the Spacy lemmatizer.
+
+        Args:
+            x (str): The input text to be lemmatized.
+
+        Returns:
+            str: The lemmatized text.
+
+        """
         spacy_doc = self.lemmatizer(x)
         return ' '.join([token.lemma_ for token in spacy_doc])
     
     def get_spacy_doc(self, x):
+        """
+        Get the Spacy document for the given input text.
+
+        Parameters:
+        x (str): The input text.
+
+        Returns:
+        spacy.tokens.doc.Doc: The Spacy document.
+        """
         return self.spacy_model(x)
 
     def preprocess_text(self, x):
+        """
+        Preprocesses the input text by removing stopwords, applying lemmatization, and returning the processed text.
+
+        Args:
+            x (str): The input text to be preprocessed.
+
+        Returns:
+            str: The preprocessed text.
+
+        """
         x = ' '.join([tok for tok in preprocess_string(x, filters=self.filters) if tok not in self.my_stopwords])
         # lemmatize
         if self.lemmatizer_to_use == 'spacy':
@@ -206,9 +273,35 @@ class TextProcessor():
         return x        
 
     def get_ngrams(self, x, k):
+        """
+        Generate n-grams from a given sequence of words.
+
+        Args:
+            x (str): The input sequence of words.
+            k (int): The size of the n-grams.
+
+        Returns:
+            list: A list of n-grams generated from the input sequence.
+
+        """
         return [' '.join(ng) for ng in ngrams(sequence=nltk.word_tokenize(x), n=k)]
     
     def retrieve_similar_nodes(self, query, k):
+        """
+        Retrieve similar nodes based on a given query.
+
+        Args:
+            query (str or List[str]): The query or list of queries to search for similar nodes.
+            k (int): The number of similar nodes to retrieve.
+
+        Returns:
+            List[List[Tuple[str, Node]]]: A list of lists, where each inner list contains tuples of the form (query, node).
+                                          Each tuple represents a similar node found for the corresponding query.
+
+        Raises:
+            RuntimeError: If there is an error in encoding the query.
+
+        """
         try:
             query_embedding = self.embedder.encode(query, convert_to_tensor=True, device=self.device, show_progress_bar=False)
         except RuntimeError:
@@ -219,6 +312,16 @@ class TextProcessor():
         return [[(q, self.idx2node[h['corpus_id']]) for h in hit if h['score'] >= 0.8] for q, hit in zip(query, hits)]
 
     def cluster_kws(self, corpus_words, thresh):
+        """
+        Clusters the given corpus words based on their embeddings using Agglomerative Clustering.
+
+        Args:
+            corpus_words (list): List of words in the corpus.
+            thresh (float): Distance threshold for clustering.
+
+        Returns:
+            dict: A dictionary where the keys are cluster IDs and the values are lists of words belonging to each cluster.
+        """
         # embedder = SentenceTransformer(self.sentence_transformer_name, device=f'cuda:{self.device_id}')
         print('Embedding corpus words...')
         corpus_embeddings = self.embedder.encode(corpus_words)

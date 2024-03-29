@@ -1,13 +1,6 @@
 """ 
 This script is used for inference.
 
-TODOs:
-    * Add a function to read arguments from the command line -- DONE
-    * Add a function that reads the input files
-    * Add a function that writes the output files
-    * Add a function for inferring a file
-    * Add the Level 4 labels to the graph
-
 Variable conventions:
 -- we can infer publications with whatever id they have as long as they have the required metadata
 -- however the id will be called "doi" in the code
@@ -21,7 +14,6 @@ python3 inference.py
 
 
 import os
-import pickle
 import json
 import argparse
 import logging
@@ -29,14 +21,15 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import distutils.util
+import importlib.resources
 
-from pprint import pprint
 from tqdm import tqdm
 from collections import Counter
-from venue_parser import VenueParser
-from multigraph import MultiGraph
-from utils import TextProcessor
 from itertools import groupby
+
+from fos.pipeline.multigraph import MultiGraph
+from fos.pipeline.venue_parser import VenueParser
+from fos.pipeline.utils import TextProcessor
 
 
 def parse_args():
@@ -49,7 +42,6 @@ def parse_args():
     parser.add_argument("--only_l4", type=lambda x:bool(distutils.util.strtobool(x)), default=False,  help="If you want to only infer L4", required=False)
     parser.add_argument("--extra_metadata", type=lambda x:bool(distutils.util.strtobool(x)), default=False,  help="If you want to save the metadata from the input file", required=False)
     parser.add_argument("--file_type", type=str, default='parquet',  help="the file type we will load", required=True)
-    # parser.add_argument("--return_triplets", type=bool,default=True,  help="If you want to enforce hierarchy", required=False)
     parser.add_argument("--batch_size", type=int, default=10000,  help="The batch size", required=False)
     args = parser.parse_args()
     return args
@@ -58,55 +50,71 @@ def parse_args():
 
 def load_excel(my_path):
     """
-    Load the excel file with the Level 4 names
+    Load the excel file with the Level 4 names.
+
+    Parameters:
+    my_path (str): The path to the excel file.
+
+    Returns:
+    list: A list of dictionaries representing the Level 4 names from the excel file.
     """
     level_4 = pd.read_excel(my_path).fillna('N/A').to_dict('records')
     return level_4
 
 
-# parse args
-arguments = parse_args()
+# ----------------------------------------------------------#
+DATA_PATH = os.path.join(importlib.resources.files(__package__.split(".")[0]), "data")
 
-# init the logger
-logging.basicConfig(
-    filename=arguments.log_path,
-    filemode='w',
-    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-    datefmt='%H:%M:%S',
-    level=logging.INFO
-)
-logging.info("Running FoS inference")
-logger = logging.getLogger('inference')
-
-# rest of initializations
-logger.info('Initializing the venue parser')
-venue_parser = VenueParser(abbreviation_dict='venues_maps.p')
-logger.info('Initializing the multigraph')
-multigraph = MultiGraph('scinobo_inference_graph.p')
-logger.info('Initializing the text processor')
+# initializations
+venue_parser = VenueParser(abbreviation_dict=os.path.join(DATA_PATH, 'venues_maps.p'))
+my_graph = MultiGraph(os.path.join(DATA_PATH, 'scinobo_inference_graph.json'))
 text_processor = TextProcessor()
-# load mapping of the texonomy
-logger.info('Loading the mappings of the taxonomy')
+
 # load mappings
-with open('L2_to_L1.json', 'r') as fin:
+with open(os.path.join(DATA_PATH, 'L2_to_L1.json'), 'r') as fin:
     L2_to_L1 = json.load(fin)
-with open('L3_to_L2.json', 'r') as fin:
+with open(os.path.join(DATA_PATH, 'L3_to_L2.json'), 'r') as fin:
     L3_to_L2 = json.load(fin)
-with open('L4_to_L3.json', 'r') as fin:
+with open(os.path.join(DATA_PATH, 'L4_to_L3.json'), 'r') as fin:
     L4_to_L3 = json.load(fin)
 
-level_4_names = load_excel('level_4_names.xlsx') # this is always in the repository -- no need to pass a path
+level_4_names = load_excel(os.path.join(DATA_PATH, 'level_4_names.xlsx')) # this is always in the repository -- no need to pass a path
 level_4_ids_2_names = {level_4['Level 4']: level_4['Level 4 Name'] for level_4 in level_4_names}
+# ----------------------------------------------------------#
 
 
-def infer_relationship(entity, multigraph, top_L1, top_L2, top_L3, top_L4, overwrite, relationship):
-        multigraph.infer_layer(entity_chain=["doi", "venue", "L4"], relationship_chain=[relationship, "in_L4"],
-                               overwrite=overwrite, max_links=top_L4)
-        multigraph.infer_layer(entity_chain=["doi", "venue", "L3"], relationship_chain=[relationship, "in_L3"],
-                               overwrite=overwrite, max_links=top_L3)
+def infer_relationship(my_graph, top_L3, top_L4, overwrite, relationship):
+    """
+    Infer the relationship between entities in the my_graph.
+    Args:
+        my_graph (my_graph): The my_graph containing the entities.
+        top_L3 (int): The maximum number of links to infer for entities in L3 layer.
+        top_L4 (int): The maximum number of links to infer for entities in L4 layer.
+        overwrite (bool): Flag indicating whether to overwrite existing links.
+        relationship (str): The relationship to infer.
+
+    Returns:
+        None
+    """
+    my_graph.infer_layer(entity_chain=["doi", "venue", "L4"], relationship_chain=[relationship, "in_L4"],
+                            overwrite=overwrite, max_links=top_L4)
+    my_graph.infer_layer(entity_chain=["doi", "venue", "L3"], relationship_chain=[relationship, "in_L3"],
+                            overwrite=overwrite, max_links=top_L3)
 
 
 def emit_candidate_ngrams(processed_text, topk):
+    """
+    Extracts candidate n-grams from the processed text and retrieves similar nodes from the inference graph.
+
+    Args:
+        processed_text (str): The processed text from which to extract n-grams.
+        topk (int): The maximum number of similar nodes to retrieve.
+
+    Returns:
+        tuple: A tuple containing two elements:
+            - A list of unigrams extracted from the processed text.
+            - A set of similar nodes retrieved from the inference graph.
+    """
     # extract ngrams and similar ngrams from the inference graph--once here
     trigrams = text_processor.get_ngrams(processed_text, k=3)
     bigrams = text_processor.get_ngrams(processed_text, k=2)
@@ -125,6 +133,17 @@ def emit_candidate_ngrams(processed_text, topk):
 
 
 def add_to_predictions(tups, title, abstract):
+    """
+    Adds inferred L5 and L6 categories to the respective tuples with L4 categories.
+
+    Args:
+        tups (list): A list of tuples representing the predictions with L4 categories.
+        title (str): The title of the document.
+        abstract (str): The abstract of the document.
+
+    Returns:
+        list: A list of tuples representing the predictions with L4, L5, and L6 categories.
+    """
     # infer L5/L6 for the inferred L4s
     processed_title = text_processor.preprocess_text(title)
     processed_abstract = text_processor.preprocess_text(abstract)
@@ -134,10 +153,10 @@ def add_to_predictions(tups, title, abstract):
         return []
     my_unigrams, bi_tri_grams = res
     all_hits = set(my_unigrams) | bi_tri_grams
-    all_l5s = [node[0] for node in multigraph.nodes(data='L5') if node[1] and any([t[3][0] in node[0] for t in tups if len(t) > 3])]
+    all_l5s = [node[0] for node in my_graph.nodes(data='L5') if node[1] and any([t[3][0] in node[0] for t in tups if len(t) > 3])]
     l5s = filter_level_5(
         all_l5s,
-        multigraph,
+        my_graph,
         all_hits,
         only_text=False
     )
@@ -147,14 +166,14 @@ def add_to_predictions(tups, title, abstract):
     for tup in tups:
         if len(tup) > 3:
             if l5s:
-                l5 = [l for l in l5s if tup[3][0] in l[0]]
+                l5 = [l5_item for l5_item in l5s if tup[3][0] in l5_item[0]]
                 if not l5:
                     tup = tup + (None, None)
                     final_tups.append(tup)
                     continue
                 # add to tup
-                for l in l5:
-                    final_tups.extend([(tup[0], tup[1], tup[2], tup[3], (l[0], l[1]), '/'.join(list(l[2])))])
+                for l5_item in l5:
+                    final_tups.extend([(tup[0], tup[1], tup[2], tup[3], (l5_item[0], l5_item[1]), '/'.join(list(l5_item[2])))])
             else:
                 tup = tup + (None, None)
                 final_tups.append(tup)
@@ -165,32 +184,68 @@ def add_to_predictions(tups, title, abstract):
     return final_tups
 
 
-def infer_l5_l6(tups, doi, title, abstract):
+def infer_l5_l6(tups, title, abstract):
+    """
+    Infers the L5/L6 categories based on the given inputs.
+
+    Args:
+        tups (list): A list of tuples containing L4 categories and their corresponding scores.
+        title (str): The title of the document.
+        abstract (str): The abstract of the document.
+
+    Returns:
+        list: A list of tuples containing the inferred L5/L6 categories and their corresponding scores.
+    """
     # get the inferred L4s and infer their L5/L6
     # check if the title and abstract are available
     if title != '' and abstract != '':
         preds = add_to_predictions(tups, title, abstract)
     elif title != '' and abstract == '':
-        logger.info(f'No abstract available for {doi}, infer only with title')
         preds = add_to_predictions(tups, title, '')
     elif title == '' and abstract != '':
-        logger.info(f'No title available for {doi}, infer only with abstract')
         preds = add_to_predictions(tups, '', abstract)
     else:
         # both are empty
-        logger.info(f'No title and abstract available for {doi}')
         preds = add_to_predictions(tups, '', '')
     return preds
 
 
 def infer(**kwargs):
+    """
+    Infers relationships between publications based on the provided input.
+
+    Args:
+        **kwargs: Keyword arguments that control the behavior of the inference process.
+            - top_L1 (int): The number of top-level 1 relationships to consider. Default is 1.
+            - top_L2 (int): The number of top-level 2 relationships to consider. Default is 2.
+            - top_L3 (int): The number of top-level 3 relationships to consider. Default is 3.
+            - top_L4 (int): The number of top-level 4 relationships to consider. Default is 4.
+            - emphasize (str): The type of relationships to emphasize. Default is 'citations'.
+            - only_l4 (bool): Whether to only infer level 4 relationships. Default is False.
+            - payload (dict): A dictionary containing the input data for inference. It should have the following keys:
+                - dois (list): A list of publication IDs.
+                - published_venues (list): A list of published venues for the publications.
+                - cit_ref_venues (list): A list of citation/reference venues for the publications.
+                - titles (dict): A dictionary mapping publication IDs to their titles.
+                - abstracts (dict): A dictionary mapping publication IDs to their abstracts.
+
+    Returns:
+        dict: A dictionary containing the inferred relationships for each publication. The keys are the publication IDs
+        and the values are lists of dictionaries, where each dictionary represents a relationship and has the following keys:
+            - L1 (str): The top-level 1 relationship.
+            - L2 (str): The top-level 2 relationship.
+            - L3 (str): The top-level 3 relationship.
+            - L4 (str): The top-level 4 relationship.
+            - L5 (str): The top-level 5 relationship.
+            - L6 (str): The top-level 6 relationship.
+            - score_for_L3 (float): The score for the top-level 3 relationship.
+            - score_for_L4 (float): The score for the top-level 4 relationship.
+            - score_for_L5 (float): The score for the top-level 5 relationship.
+    """
     # defaults
-    top_L1 = kwargs.get('top_L1', 1)
-    top_L2 = kwargs.get('top_L2', 2)
     top_L3 = kwargs.get('top_L3', 3)
     top_L4 = kwargs.get('top_L4', 4)
     # other variables
-    emphasize = kwargs.get('emphasize', 'citations')
     only_l4 = kwargs.get('only_l4', False)
     # return_triplets = kwargs.get('return_triplets', True)
     # ids of publications
@@ -200,25 +255,21 @@ def infer(**kwargs):
     titles = kwargs['payload']['titles']
     abstracts = kwargs['payload']['abstracts']
     # add the publications to the graph that we are going to infer
-    logger.info('Adding publications to the graph')
-    add(multigraph, published_venues, cit_ref_venues)
+    add(my_graph, published_venues, cit_ref_venues)
     # inferring relationships
-    logger.info('Inferring relationships')
     _ = [
-        infer_relationship(ids, multigraph, top_L1, top_L2, top_L3, top_L4, overwrite=True, relationship='cites'),
-        infer_relationship(ids, multigraph, top_L1, top_L2, top_L3, top_L4, overwrite=False, relationship='published')
+        infer_relationship(my_graph, top_L3, top_L4, overwrite=True, relationship='cites'),
+        infer_relationship(my_graph, top_L3, top_L4, overwrite=False, relationship='published')
     ]
     out = {}
-    logger.info('Retrieving results for publications')
-    all_l3s = [(relationship[0], relationship[1], relationship[2]) for relationship in multigraph.edges(data='in_L3', nbunch=ids) if relationship[2]]
-    all_l4s = [(relationship[0], relationship[1], relationship[2]) for relationship in multigraph.edges(data='in_L4', nbunch=ids) if relationship[2]]
+    all_l3s = [(relationship[0], relationship[1], relationship[2]) for relationship in my_graph.edges(data='in_L3', nbunch=ids) if relationship[2]]
+    all_l4s = [(relationship[0], relationship[1], relationship[2]) for relationship in my_graph.edges(data='in_L4', nbunch=ids) if relationship[2]]
     # aggregate to relationship[0] which is the id
     all_l3s = {k: [(i[1],i[2]) for i in list(v)] for k, v in groupby(all_l3s, key=lambda x: x[0])}
     all_l4s = {k: [(i[1],i[2]) for i in list(v)] for k, v in groupby(all_l4s, key=lambda x: x[0])}
     ########################################
     # clean the graph from the dois that where inferred
-    logger.info('Cleaning the graph from the inferred nodes')
-    multigraph.remove_nodes_from(ids)
+    my_graph.remove_nodes_from(ids)
     ########################################
     for doi in tqdm(ids, desc='Infer L5/L6'):
         if doi not in all_l3s and doi not in all_l4s:
@@ -266,9 +317,9 @@ def infer(**kwargs):
             ############################################
             # infer L5 and L6
             if not only_l4:
-                my_triplets = infer_l5_l6(my_triplets, doi, titles[doi], abstracts[doi])
+                my_triplets = infer_l5_l6(my_triplets, titles[doi], abstracts[doi])
             else:
-                my_triplets = [(tup[0], tup[1], tup[2], tup[3], None, None) if len(tup) > 3 else (tup[0], tup[1], tup[2], None, None, None) for tup in my_tups]
+                my_triplets = [(tup[0], tup[1], tup[2], tup[3], None, None) if len(tup) > 3 else (tup[0], tup[1], tup[2], None, None, None) for tup in my_triplets]
             out[doi] = [
                 (
                     {
@@ -306,7 +357,6 @@ def infer(**kwargs):
             if not only_l4:
                 my_tups = infer_l5_l6(
                     my_tups,
-                    doi,
                     titles[doi],
                     abstracts[doi]
                 )
@@ -331,14 +381,37 @@ def infer(**kwargs):
     return out
 
 
-def add(multigraph, published_venues, cit_ref_venues):
-    multigraph.add_entities(from_entities="doi", to_entities="venue", relationship_type="published",
+def add(my_graph, published_venues, cit_ref_venues):
+    """
+    Adds entities and relationships to the my_graph.
+
+    Args:
+        my_graph (my_graph): The my_graph to add entities and relationships to.
+        published_venues: A list of tuples representing the published venues.
+            Each tuple contains a DOI and a venue name.
+        cit_ref_venues: A list of tuples representing the cited/referenced venues.
+            Each tuple contains a DOI and a venue name.
+    """
+    my_graph.add_entities(from_entities="doi", to_entities="venue", relationship_type="published",
                             relationships=published_venues)
-    multigraph.add_entities(from_entities="doi", to_entities="venue", relationship_type="cites",
+    my_graph.add_entities(from_entities="doi", to_entities="venue", relationship_type="cites",
                             relationships=cit_ref_venues)
 
 
 def one_ranking(l5s_to_keep, canditate_l5, my_occurences, my_graph):
+    """
+    Ranks the level 5 categories based on their scores and word occurrences.
+
+    Args:
+        l5s_to_keep (dict): A dictionary containing level 5 categories as keys and their associated keywords as values.
+        canditate_l5 (list): A list of candidate level 5 categories to consider for ranking.
+        my_occurences (dict): A dictionary containing the occurrences of each keyword.
+        my_graph (dict): A dictionary representing the graph structure of the categories.
+
+    Returns:
+        list: A list of tuples containing the ranked level 4 categories, their highest ranked level 5 category, and the unique keywords associated with the level 5 category.
+
+    """
     final_ranking = []
     l4_to_l5 = dict()
     for l5, kws in l5s_to_keep.items():
@@ -380,10 +453,25 @@ def one_ranking(l5s_to_keep, canditate_l5, my_occurences, my_graph):
         else:
             sorted_final_ranking_per_l4[l4].append(tup)
 
-    return [(l4, sorted(l5s, key= lambda x: x[2], reverse=True)[0], list(set([l1 for l in l5s for l1 in l[3]]))) for l4, l5s in sorted_final_ranking_per_l4.items()]
+    return [(l4, sorted(l5s, key= lambda x: x[2], reverse=True)[0], list(set([l1 for l_items in l5s for l1 in l_items[3]]))) for l4, l5s in sorted_final_ranking_per_l4.items()]
 
 
-def filter_level_5(canditate_l5, my_graph, my_hits, only_text=False):    
+def filter_level_5(canditate_l5, my_graph, my_hits, only_text=False):
+    """
+    Filters level 5 candidates based on the given parameters.
+
+    Args:
+        canditate_l5 (list): List of level 5 candidates.
+        my_graph (networkx.Graph): Graph containing the relationships between words.
+        my_hits (list): List of hits.
+        only_text (bool, optional): Flag indicating whether to consider only text. Defaults to False.
+
+    Returns:
+        list: List of filtered level 5 candidates.
+
+    Raises:
+        None
+    """
     candidates = []
     candidates.extend(
         [(bi, [n for n in my_graph[bi] if 'L5' in my_graph.nodes[n]]) for bi in my_hits if bi in my_graph])
@@ -430,97 +518,18 @@ def filter_level_5(canditate_l5, my_graph, my_hits, only_text=False):
         return my_res
 
 
-def load_flatten_words_top_topic(topics_dir):
-    sectors_to_words = dict()
-    for file in os.listdir(topics_dir):
-
-        if 'all_topics' not in file:
-            continue
-
-        with open(os.path.join(topics_dir, file), 'rb') as fin:
-            my_words = pickle.load(fin)
-
-        # convert to l5_dict
-        for l5, data in my_words.items():
-            l5 = l5.replace('@', '&')
-            l4_id = l5.split('_')[-2]
-            l5_id = l5.split('_')[-1]
-            l5 = ' '.join(l5.split('_')[1:-2])
-            l5 = f'L4_{l5}_{l4_id}_{l5_id}'
-            sectors_to_words[l5] = data
-
-    return sectors_to_words
-
-
-def test():
-    # initializations
-    my_venue_parser = VenueParser(abbreviation_dict='venues_maps.p')
-    multigraph = MultiGraph('scinobo_inference_graph.p')
-    text_processor = TextProcessor()
-    my_title = """Embedding Biomedical Ontologies by Jointly Encoding Network Structure and Textual Node Descriptors"""
-    my_abstract = """Network Embedding (NE) methods, which
-    map network nodes to low-dimensional feature vectors, have wide applications in network analysis and bioinformatics. Many existing NE methods rely only on network structure, overlooking other information associated
-    with the nodes, e.g., text describing the nodes.
-    Recent attempts to combine the two sources of
-    information only consider local network structure. We extend NODE2VEC, a well-known NE
-    method that considers broader network structure, to also consider textual node descriptors
-    using recurrent neural encoders. Our method
-    is evaluated on link prediction in two networks derived from UMLS. Experimental results demonstrate the effectiveness of the proposed approach compared to previous work."""
-
-    payload = {
-        "doi": "10.18653/v1/w19-5032",
-        "doi_cites_venues": {
-            "10.18653/v1/w19-5032": {
-                "acl": 2,
-                "aimag": 1,
-                "arxiv artificial intelligence": 1,
-                "arxiv computation and language": 2,
-                "arxiv machine learning": 1,
-                "arxiv social and information networks": 1,
-                "briefings in bioinformatics": 1,
-                "comparative and functional genomics": 1,
-                "conference of the european chapter of the association for computational linguistics": 1,
-                "cvpr": 1,
-                "emnlp": 3,
-                "eswc": 1,
-                "iclr": 2,
-                "icml": 1,
-                "ieee trans signal process": 1,
-                "j mach learn res": 1,
-                "kdd": 4,
-                "naacl": 1,
-                "nips": 1,
-                "nucleic acids res": 1,
-                "pacific symposium on biocomputing": 3,
-                "physica a statistical mechanics and its applications": 1,
-                "proceedings of the acm conference on bioinformatics computational biology and health informatics": 1,
-                "sci china ser f": 1,
-                "the web conference": 1
-            }
-        },
-        "doi_publish_venue": {
-            "10.18653/v1/w19-5032": {
-                "proceedings of the bionlp workshop and shared task": 1
-            }
-        },
-        "emphasize": "citations"
-    }
-
-    my_res = infer(payload, multigraph, my_venue_parser)
-    my_l4 = my_res["10.18653/v1/w19-5032"][0]['L4'] if 'L4' in my_res["10.18653/v1/w19-5032"][0] else None
-    if my_l4 is None:
-        return
-    title = text_processor.preprocess_text(my_title)
-    abstract = text_processor.preprocess_text(my_abstract)
-    my_text = title + ' ' + abstract
-    my_l5s = [node[0] for node in multigraph.nodes(data='L5') if node[1] and my_l4 in node[0]]
-    l5s = filter_level_5(
-        my_text, my_l5s, False, 5, text_processor, multigraph, only_text=False
-    )
-    pprint(l5s)
-
-
 def yielder_json(input_dir, files):
+    """
+    A generator function that yields the contents of JSON files in the given directory.
+
+    Args:
+        input_dir (str): The directory path where the JSON files are located.
+        files (list): A list of file names to process.
+
+    Yields:
+        tuple: A tuple containing the loaded JSON data and the file name.
+
+    """
     for file in files:
         if file.endswith('.json'):
             with open(os.path.join(input_dir, file), 'r') as fin:
@@ -528,12 +537,44 @@ def yielder_json(input_dir, files):
     
 
 def yielder_parquet(input_dir, files):
+    """
+    Generator function that yields each parquet file in the given directory.
+
+    Args:
+        input_dir (str): The directory path where the parquet files are located.
+        files (list): A list of file names in the directory.
+
+    Yields:
+        tuple: A tuple containing the pandas DataFrame read from the parquet file and the file name.
+
+    """
     for file in files:
         if file.endswith('.parquet'):
             yield pd.read_parquet(os.path.join(input_dir, file)).fillna('N/A'), file
 
 
 def create_payload(dato):
+    """
+    Create a payload for inference based on the given data.
+
+    Args:
+        dato (list): A list of dictionaries containing publication data.
+
+    Returns:
+        dict: A dictionary representing the payload for inference. The dictionary has the following structure:
+            {
+                'dois': [],
+                'cit_ref_venues': {},
+                'published_venues': {},
+                'titles': {},
+                'abstracts': {}
+            }
+            - 'dois' (list): A list of publication IDs.
+            - 'cit_ref_venues' (dict): A dictionary mapping publication IDs to weighted cited/referenced venues.
+            - 'published_venues' (dict): A dictionary mapping publication IDs to published venues.
+            - 'titles' (dict): A dictionary mapping publication IDs to publication titles.
+            - 'abstracts' (dict): A dictionary mapping publication IDs to publication abstracts.
+    """    
     payload = {
         'dois': [],
         'cit_ref_venues': {},
@@ -544,11 +585,9 @@ def create_payload(dato):
     for d in tqdm(dato, desc='Creating payload for inference'):
         # input checks
         if 'id' not in d:
-            logger.info('publication without id, skipping ...')
             continue
         my_id = d['id']
         if 'cit_venues' not in d and 'ref_venues' not in d:
-            logger.info(f'publication with {my_id} has no cit_venues and ref_venues, skipping ...')
             continue
         elif 'cit_venues' in d and 'ref_venues' not in d:
             cit_venues = d['cit_venues']
@@ -558,7 +597,6 @@ def create_payload(dato):
             cit_venues = d['cit_venues']
             ref_venues = d['ref_venues']
         if 'pub_venue' not in d:
-            logger.info(f'publication with {my_id} has no pub_venue, leaving this field empty')
             pub_venue = ''
         else:
             pub_venue_res = venue_parser.preprocess_venue(d['pub_venue'])
@@ -617,7 +655,23 @@ def create_payload(dato):
     return payload
 
 
-def process_pred(res, ftype, metadata=None, extra=False):
+def process_pred(res, ftype="parquet", metadata=None, extra=False):
+    """
+    Process the predictions and generate a list of dictionaries containing the processed results.
+
+    Args:
+        res (dict): A dictionary containing the predictions.
+        ftype (str): The file type of the input data.
+        metadata (list, optional): A list of dictionaries containing metadata information. Defaults to None.
+        extra (bool, optional): A flag indicating whether to include extra information in the processed results. Defaults to False.
+
+    Returns:
+        list: A list of dictionaries containing the processed results.
+
+    Raises:
+        None
+
+    """
     # filter L4 and assign names while processing the predictions
     if ftype == 'jsonl':
         res_to_dump = []
@@ -636,7 +690,7 @@ def process_pred(res, ftype, metadata=None, extra=False):
                             'L1': pr['L1'], 
                             'L2': pr['L2'], 
                             'L3': pr['L3'], 
-                            'L4': 'N/A' if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']], 
+                            'L4': None if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']], 
                             'L5': pr['L5'], 
                             'L6': pr['L6']    
                         } for pr in v[:2]
@@ -661,7 +715,7 @@ def process_pred(res, ftype, metadata=None, extra=False):
                                 'L1': pr['L1'], 
                                 'L2': pr['L2'], 
                                 'L3': pr['L3'], 
-                                'L4': 'N/A' if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']], 
+                                'L4': None if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']], 
                                 'L5': pr['L5'], 
                                 'L6': pr['L6']    
                             } for pr in v[:2]
@@ -690,7 +744,7 @@ def process_pred(res, ftype, metadata=None, extra=False):
                     'L1': pr['L1'],
                     'L2': pr['L2'],
                     'L3': pr['L3'],
-                    'L4': 'N/A' if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']],
+                    'L4': None if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']],
                     'L5': pr['L5'], 
                     'L6': pr['L6'],
                     'score_for_L3': pr['score_for_L3'],
@@ -705,7 +759,7 @@ def process_pred(res, ftype, metadata=None, extra=False):
                     'L1': pr['L1'],
                     'L2': pr['L2'],
                     'L3': pr['L3'],
-                    'L4': 'N/A' if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']],
+                    'L4': None if pr['L3'] == 'developmental biology' or pr['L4'] not in level_4_ids_2_names or level_4_ids_2_names[pr['L4']] == 'N/A' else level_4_ids_2_names[pr['L4']],
                     'L5': pr['L5'], 
                     'L6': pr['L6'],
                     'score_for_L3': pr['score_for_L3'],
@@ -715,6 +769,17 @@ def process_pred(res, ftype, metadata=None, extra=False):
 
 
 def save_pred(res, ftype, opath):
+    """
+    Save the prediction results to a file.
+
+    Args:
+        res (list): The prediction results to be saved.
+        ftype (str): The file type to save the results in. Valid options are 'jsonl' and any other value for parquet.
+        opath (str): The output file path to save the results.
+
+    Returns:
+        None
+    """
     if ftype == 'jsonl':
         with open(opath, 'w') as fout:
             json.dump(res, fout)
@@ -726,7 +791,19 @@ def save_pred(res, ftype, opath):
         pq.write_table(table, opath)
 
 
-if __name__ == '__main__':
+def main():
+    # parse args
+    arguments = parse_args()
+    # init the logger
+    logging.basicConfig(
+        filename=arguments.log_path,
+        filemode='w',
+        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+        datefmt='%H:%M:%S',
+        level=logging.INFO
+    )
+    logging.info("Running FoS inference")
+    logger = logging.getLogger('inference')
     # create the output directory
     logger.info('Creating the output directory: {}'.format(arguments.out_path))
     os.makedirs(arguments.out_path, exist_ok=True)
@@ -765,7 +842,7 @@ if __name__ == '__main__':
                 payload = payload_to_infer,
                 only_l4=arguments.only_l4
             )
-            logger.info(f'Inference done for chunk')
+            logger.info('Inference done for chunk')
             if arguments.extra_metadata:
                 res_to_dump = process_pred(infer_res, arguments.file_type, metadata=chunk, extra=True)
             else:
@@ -775,3 +852,7 @@ if __name__ == '__main__':
         logger.info(f'Dumping the predictions for the file with index: {idx} and file name: {file_name}')
         output_file_name = os.path.join(arguments.out_path, file_name)
         save_pred(chunk_predictions, arguments.file_type, output_file_name)
+        
+        
+if __name__ == '__main__':
+    main()

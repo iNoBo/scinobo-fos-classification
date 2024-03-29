@@ -1,0 +1,13 @@
+[
+    {
+        "id": "the id of the request",
+        "L1": "the L1 FoS pred",
+        "L2": "the L2 FoS pred",
+        "L3": "the L3 FoS pred",
+        "L4": "the L4 FoS pred",
+        "L5": "the L5 FoS pred", 
+        "L6": "the L6 FoS pred",
+        "score_for_L3": "the score for L3",
+        "score_for_L4": "the score for L4"
+    }
+]
