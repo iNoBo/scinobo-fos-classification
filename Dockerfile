@@ -8,7 +8,7 @@ WORKDIR /app/src/fos/data/
 ARG HF_TOKEN
 # download the scinobo inference graph and the graph embeddings from HF organization
 RUN wget --header="Authorization: Bearer ${HF_TOKEN}" https://huggingface.co/datasets/iNoBo/scinobo-fos-graph-embeddings/resolve/main/graph_embeddings_with_L6_21_12_2022.p?download=true -O graph_embeddings_with_L6_21_12_2022.p
-RUN wget --header="Authorization: Bearer ${HF_TOKEN}" https://huggingface.co/datasets/iNoBo/scinobo-fos-inference-graph/resolve/main/scinobo_inference_graph.p?download=true -O scinobo_inference_graph.p
+RUN wget --header="Authorization: Bearer ${HF_TOKEN}" https://huggingface.co/datasets/iNoBo/scinobo-fos-inference-graph/resolve/main/scinobo_inference_graph.json?download=true -O scinobo_inference_graph.json
 
 WORKDIR /app
 
