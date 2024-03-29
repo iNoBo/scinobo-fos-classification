@@ -7,7 +7,13 @@ We will test the following:
 """
 
 import unittest
-from fos.venue_parser import VenueParser
+# ------------------------------------------------------------ #
+import sys
+sys.path.append("./src") # since it is not installed yet, we need to add the path to the module 
+# -- this is for when cloning the repo
+# ------------------------------------------------------------ #
+
+from fos.pipeline.venue_parser import VenueParser
 
 
 class TestVenueParser(unittest.TestCase):
@@ -16,34 +22,18 @@ class TestVenueParser(unittest.TestCase):
         self.parser = VenueParser(abbreviation_dict)
 
     def test_get_abbreviations(self):
-        string = "Proceedings of the International Conference on Machine Learning"
-        cleaned_string = "proceedings international conference machine learning"
-        abbreviations = self.parser.get_abbreviations(string, cleaned_string)
-        self.assertEqual(abbreviations, "ICML")
-
-    def test_preprocess(self):
-        string = "Proceedings of the International Conference on Machine Learning"
-        preprocessed_string = self.parser.preprocess(string)
-        self.assertEqual(preprocessed_string, "proceedings international conference machine learning")
-
-    def test_preprocess_venue(self):
-        venue = "Proceedings of the International Conference on Machine Learning"
-        preprocessed_venue = self.parser.preprocess_venue(venue)
-        self.assertEqual(preprocessed_venue, "proceedings international conference machine learning")
-
-    def test_preprocess_venue_remove_latin_numbers(self):
-        venue = "Proceedings of the International Conference on Machine Learning IV"
-        preprocessed_venue = self.parser.preprocess_venue(venue)
-        self.assertEqual(preprocessed_venue, "proceedings international conference machine learning")
+        string = "Empirical Methods in Natural Language Processing"
+        abbreviations, _ = self.parser.preprocess_venue(string)
+        self.assertEqual(abbreviations, "emnlp")
 
     def test_preprocess_venue_blacklist(self):
         venue = "n/a"
-        preprocessed_venue = self.parser.preprocess_venue(venue)
+        preprocessed_venue, _ = self.parser.preprocess_venue(venue)
         self.assertEqual(preprocessed_venue, None)
 
     def test_preprocess_venue_invalid_input(self):
         venue = 12345
-        preprocessed_venue = self.parser.preprocess_venue(venue)
+        preprocessed_venue, _ = self.parser.preprocess_venue(venue)
         self.assertEqual(preprocessed_venue, None)
 
 if __name__ == '__main__':

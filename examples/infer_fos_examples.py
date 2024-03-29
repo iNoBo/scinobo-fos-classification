@@ -3,8 +3,13 @@
 This script imports the module fos.inference and infers some example publications.
 
 """
+# ------------------------------------------------------------ #
+import sys
+sys.path.append("./src") # since it is not installed yet, we need to add the path to the module 
+# -- this is for when cloning the repo
+# ------------------------------------------------------------ #
 
-from fos.inference import create_payload, infer, process_pred
+from fos.pipeline.inference import create_payload, infer, process_pred
 from pprint import pprint
 
 
@@ -85,13 +90,13 @@ EXAMPLE_2 = [
 
 def infer_example_1():
     payload = create_payload(EXAMPLE_1)
-    pred = infer(payload)
+    pred = infer(payload=payload)
     return process_pred(pred)
 
 
 def infer_example_2():
     payload = create_payload(EXAMPLE_2)
-    pred = infer(payload)
+    pred = infer(payload=payload)
     return process_pred(pred)
 
 

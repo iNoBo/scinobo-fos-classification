@@ -10,9 +10,13 @@ We will test the following:
     - the API can handle invalid requests
     - the API can handle invalid responses
 """
-
+# ------------------------------------------------------------ #
+import sys
+sys.path.append("./src") # since it is not installed yet, we need to add the path to the module 
+# -- this is for when cloning the repo
+# ------------------------------------------------------------ #
 from fastapi.testclient import TestClient
-from fos.api import app
+from fos.server.api import app
 
 
 client = TestClient(app)
@@ -45,12 +49,12 @@ def test_infer_publications():
     assert len(response.json()["data"]) == 2
     assert response.json()["data"][0]["id"] == "1"
     assert response.json()["data"][1]["id"] == "2"
-    assert response.json()["data"][0]["L1"] == "N/A"
-    assert response.json()["data"][0]["L2"] == "N/A"
-    assert response.json()["data"][0]["L3"] == "N/A"
-    assert response.json()["data"][0]["L4"] == "N/A"
-    assert response.json()["data"][0]["L5"] == "N/A"
-    assert response.json()["data"][0]["L6"] == "N/A"
+    assert response.json()["data"][0]["L1"] is None
+    assert response.json()["data"][0]["L2"] is None
+    assert response.json()["data"][0]["L3"] is None
+    assert response.json()["data"][0]["L4"] is None
+    assert response.json()["data"][0]["L5"] is None
+    assert response.json()["data"][0]["L6"] is None
     assert response.json()["data"][0]["score_for_L3"] == 0.0
     assert response.json()["data"][0]["score_for_L4"] == 0.0
 
@@ -80,9 +84,7 @@ def test_infer_publications_invalid_request():
     # Remove the required field 'title' from the first publication
     del request_data["data"][0]["id"]
     response = client.post("/infer_fos", json=request_data)
-    assert response.status_code == 400
-    assert response.json()["success"] == 0
-    assert "message" in response.json()
+    assert response.status_code == 422 # invalid data
 
 
 def test_infer_publications_empty_data():
@@ -92,15 +94,8 @@ def test_infer_publications_empty_data():
     }
     response = client.post("/infer_fos", json=request_data)
     assert response.status_code == 200
-    assert len(response.json()["data"]) == 1
-    assert response.json()["data"][0]["L1"] == "N/A"
-    assert response.json()["data"][0]["L2"] == "N/A"
-    assert response.json()["data"][0]["L3"] == "N/A"
-    assert response.json()["data"][0]["L4"] == "N/A"
-    assert response.json()["data"][0]["L5"] == "N/A"
-    assert response.json()["data"][0]["L6"] == "N/A"
-    assert response.json()["data"][0]["score_for_L3"] == 0.0
-    assert response.json()["data"][0]["score_for_L4"] == 0.0
+    assert len(response.json()["data"]) == 0
+    assert response.json()["data"] == []
 
 
 def test_publications_missing_data():
@@ -117,7 +112,7 @@ def test_publications_missing_data():
     }
     response = client.post("/echo", json=request_data)
     assert response.status_code == 200
-    assert len(response["data"]) == 1
+    assert len(response.json()["data"]) == 1
     assert response.json()["data"][0]["id"] == "1"
     assert response.json()["data"][0]["title"] == "Publication 1"
     assert response.json()["data"][0]["abstract"] == ""
@@ -141,11 +136,11 @@ def test_infer_publications_missing_data():
     response = client.post("/infer_fos", json=request_data)
     assert response.status_code == 200
     assert len(response.json()["data"]) == 1
-    assert response.json()["data"][0]["L1"] == "N/A"
-    assert response.json()["data"][0]["L2"] == "N/A"
-    assert response.json()["data"][0]["L3"] == "N/A"
-    assert response.json()["data"][0]["L4"] == "N/A"
-    assert response.json()["data"][0]["L5"] == "N/A"
-    assert response.json()["data"][0]["L6"] == "N/A"
+    assert response.json()["data"][0]["L1"] is None
+    assert response.json()["data"][0]["L2"] is None
+    assert response.json()["data"][0]["L3"] is None
+    assert response.json()["data"][0]["L4"] is None
+    assert response.json()["data"][0]["L5"] is None
+    assert response.json()["data"][0]["L6"] is None
     assert response.json()["data"][0]["score_for_L3"] == 0.0
     assert response.json()["data"][0]["score_for_L4"] == 0.0

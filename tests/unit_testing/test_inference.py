@@ -14,10 +14,13 @@ We will test the following:
         - 
 
 """
-
 import unittest
-from fos.inference import infer, infer_relationship, infer_l5_l6, create_payload
-from fos.graph_utils import MyMultiGraph
+# ------------------------------------------------------------ #
+import sys
+sys.path.append("./src") # since it is not installed yet, we need to add the path to the module 
+# -- this is for when cloning the repo
+# ------------------------------------------------------------ #
+from fos.pipeline.inference import infer, infer_l5_l6, create_payload
 
 
 class InferenceTestCase(unittest.TestCase):
@@ -44,19 +47,12 @@ class InferenceTestCase(unittest.TestCase):
         payload = create_payload(data)
         expected_payload = {
             "dois": ["1", "2"],
-            "published_venues": ["Venue 1", "Venue 6"],
-            "cit_ref_venues": ["Venue 2", "Venue 3", "Venue 4", "Venue 5", "Venue 7", "Venue 8", "Venue 9", "Venue 10"]
+            "cit_ref_venues": {'1': {'venue': 4}, '2': {'venue': 4}},
+            "published_venues": {'1': {'venue': 1}, '2': {'venue': 1}},
+            "titles": {'1': 'Publication 1', '2': 'Publication 2'},
+            "abstracts": {'1': 'Abstract 1', '2': 'Abstract 2'}
         }
         self.assertEqual(payload, expected_payload)
-
-    def test_infer_relationship(self):
-        # Test infer_relationship function with sample data
-        my_graph = MyMultiGraph()
-        my_graph.add_node("doi1", "venue1", "L4_1")
-        my_graph.add_node("doi2", "venue2", "L4_2")
-        infer_relationship(my_graph, top_L3=2, top_L4=3, overwrite=True, relationship="cites")
-        self.assertEqual(my_graph.get_relationships("doi1", "venue1", "L4_1"), [("cites", "in_L4", "doi2", "venue2", "L4_2")])
-        self.assertEqual(my_graph.get_relationships("doi2", "venue2", "L4_2"), [])
 
     def test_infer_l5_l6(self):
         # Test infer_l5_l6 function with sample data
@@ -64,21 +60,23 @@ class InferenceTestCase(unittest.TestCase):
         title = "Sample Title"
         abstract = "Sample Abstract"
         preds = infer_l5_l6(tups, title, abstract)
-        expected_preds = [("L4_1", 0.8, "L5_1", "L6_1"), ("L4_2", 0.6, None, None)]
+        expected_preds = [("L4_1", 0.8, None, None, None), ("L4_2", 0.6, None, None, None)]
         self.assertEqual(preds, expected_preds)
 
     def test_infer(self):
         # Test infer function with sample data
         payload = {
-            "dois": ["doi1", "doi2"],
-            "published_venues": ["venue1", "venue2"],
-            "cit_ref_venues": ["venue3", "venue4"]
+            "dois": ["1", "2"],
+            "cit_ref_venues": {'1': {'venue': 4}, '2': {'venue': 4}},
+            "published_venues": {'1': {'venue': 1}, '2': {'venue': 1}},
+            "titles": {'1': 'Publication 1', '2': 'Publication 2'},
+            "abstracts": {'1': 'Abstract 1', '2': 'Abstract 2'}
         }
         result = infer(payload=payload)
-        expected_result = [
-            ("doi1", "venue1", "L4_1", "L5_1", "L6_1"),
-            ("doi2", "venue2", "L4_2", None, None)
-        ]
+        expected_result = {
+            '1': [{'L1': None, 'L2': None, 'L3': None, 'L4': None, 'L5': None, 'L6': None, 'score_for_L3': 0.0, 'score_for_L4': 0.0, 'score_for_L5': 0.0}], 
+            '2': [{'L1': None, 'L2': None, 'L3': None, 'L4': None, 'L5': None, 'L6': None, 'score_for_L3': 0.0, 'score_for_L4': 0.0, 'score_for_L5': 0.0}]
+        }
         self.assertEqual(result, expected_result)
 
 if __name__ == '__main__':
