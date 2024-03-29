@@ -33,12 +33,15 @@ The classifier works with a dynamic hierarchical taxonomy. The taxonomy has 6 Le
 ## Create docker image
 Use the following command to create a docker image.
 The flag -t specifies the name of the image that will be created with an optional tag (for example its version).
+
 `docker build --build-arg HF_TOKEN=<AUTHORIZED ORG HF TOKEN> --tag scinobo-fos:latest .`
+
 - The name of the image in this case is scinobo-fos:latest.
 - The location of the Dockerfile is the current directory.
 
 ## Run the FastAPI server for FoS
 `docker run  --rm --name scinobo-fos-api -p 1997:1997 scinobo-fos conda run --no-capture-output -n docker_env uvicorn fos.server.api:app --host 0.0.0.0 --port 1997`
+
 **NOTE**: scinobo-fos-api is the name of the container
 **NOTE**: the docker is exposing only the port 1997
 **NOTE**: the conda environment created through the dockerfile. You can change the name from the dockerfile.
