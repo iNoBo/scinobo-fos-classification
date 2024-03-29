@@ -21,15 +21,15 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 import distutils.util
+import importlib.resources
 
 from tqdm import tqdm
 from collections import Counter
 from itertools import groupby
 
-from fos.venue_parser import VenueParser
-from fos.graph_utils import MyMultiGraph
-from fos.utils import TextProcessor
-from fos._import_utils import DATA_PATH
+from fos.pipeline.multigraph import MultiGraph
+from fos.pipeline.venue_parser import VenueParser
+from fos.pipeline.utils import TextProcessor
 
 
 def parse_args():
@@ -63,9 +63,11 @@ def load_excel(my_path):
 
 
 # ----------------------------------------------------------#
+DATA_PATH = os.path.join(importlib.resources.files(__package__.split(".")[0]), "data")
+
 # initializations
 venue_parser = VenueParser(abbreviation_dict=os.path.join(DATA_PATH, 'venues_maps.p'))
-my_graph = MyMultiGraph(os.path.join(DATA_PATH, 'scinobo_inference_graph.p'))
+my_graph = MultiGraph(os.path.join(DATA_PATH, 'scinobo_inference_graph.json'))
 text_processor = TextProcessor()
 
 # load mappings

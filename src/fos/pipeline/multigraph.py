@@ -38,7 +38,7 @@ Usage:
 
 import networkx as nx
 import os
-import pickle
+import json
 
 from tqdm import tqdm
 
@@ -48,7 +48,7 @@ def mydate():
     return date.today().strftime("%m_%d_%y")
 
 
-class MyMultiGraph(nx.MultiDiGraph):
+class MultiGraph(nx.MultiDiGraph):
     """
     A subclass of `nx.MultiDiGraph` that represents a multi-graph with additional functionality.
 
@@ -78,7 +78,11 @@ class MyMultiGraph(nx.MultiDiGraph):
         Returns:
         None
         """
-        pickle.dump(self, open(path, 'wb'))
+        # Convert the MultiGraph to node-link data format
+        data = nx.node_link_data(self)
+        # Save the data to a JSON file
+        with open(path, 'w') as f:
+            json.dump(data, f)
         assert (os.path.isfile(path))
 
     def add_entities(self, from_entities, to_entities, relationship_type, relationships, cutoff=0):
@@ -93,7 +97,7 @@ class MyMultiGraph(nx.MultiDiGraph):
             - cutoff (int, optional): The minimum value for a relationship to be included. Defaults to 0.
             """        
         sources = [k for k in relationships.keys() if k]
-        targets = [k for d in relationships.values() for k, v in d.items() if k]
+        targets = [k for d in relationships.values() for k, _ in d.items() if k]
         self.add_nodes_from(sources)
         self.add_nodes_from(targets)
         for node in sources:
@@ -114,7 +118,10 @@ class MyMultiGraph(nx.MultiDiGraph):
         Returns:
         None
         """
-        super().__init__(pickle.load(open(path, 'rb')))
+        with open(path, 'r') as f:
+            data = json.load(f)
+        G = nx.node_link_graph(data)
+        super().__init__(G)
 
     def infer_layer(self, entity_chain, relationship_chain, overwrite=False, max_links=2, filters=[0, 0], new_relationship="default"):
         """

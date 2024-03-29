@@ -16,6 +16,7 @@ import re
 import pycountry
 import nltk
 import torch
+import importlib.resources
 
 # this is for blocking tensorflow -- it reserves all the gpu memory for some reason
 # os.environ["CUDA_VISIBLE_DEVICES"] = "" 
@@ -33,11 +34,11 @@ from nltk.corpus import stopwords
 from nltk.util import ngrams
 from sentence_transformers import SentenceTransformer, util
 from sklearn.cluster import AgglomerativeClustering
-from fos._import_utils import DATA_PATH
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 # os.environ["CUDA_VISIBLE_DEVICES"] = "1" 
+DATA_PATH = os.path.join(importlib.resources.files(__package__.split(".")[0]), "data")
 
 
 class TextProcessor():
