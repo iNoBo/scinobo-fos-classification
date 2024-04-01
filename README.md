@@ -67,6 +67,6 @@ To run a container with the bulk inference, the following command is needed:
 - **path/to/output/local/data** --> a directory in the host where you want the container to save the output
 
 ## Miscellaneous
-- **If you want to connect to the docker -->** `docker exec -it fos_inference_docker /bin/bash`
-- **If you want to see the logs of the docker -->** `docker logs fos_inference_docker`
-- **Copy the results of the docker to the host destination folder -->** `docker cp fos_inference_docker: ./output_test_files ./`
+- **If you want to connect to the docker -->** `docker exec -it <container_name> /bin/bash`
+- **If you want to see the logs of the docker -->** `docker logs <container_name>`
+- **Copy the results of the docker to the host destination folder -->** `docker cp <container_name>: ./output_test_files ./`
