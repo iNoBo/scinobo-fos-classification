@@ -173,7 +173,7 @@ def infer_publications(request_data: FoSInferRequests):
         return response_data
     except Exception as e:
         LOGGER.error(f"Error: {e}")
-        return HTTPException(status_code=400, detail={"success": 0, "message": f"{str(e)}\n{traceback.format_exc()}"})
+        raise HTTPException(status_code=400, detail={"success": 0, "message": f"{str(e)}\n{traceback.format_exc()}"})
     
     
 if __name__ == "__main__":
