@@ -49,7 +49,7 @@ The flag -t specifies the name of the image that will be created with an optiona
 ## Run image container for bulk inference
 To run a container with the bulk inference, the following command is needed:
 
-`docker run <--rm> -i <--name CONTAINER-NAME> -v path/to/input/local/data:/input_files -v path/to/output/local/data:/output_files IMAGE-NAME python inference.py <args>`
+`docker run <--rm> -i <--name CONTAINER-NAME> -v path/to/input/local/data:/input_files -v path/to/output/local/data:/output_files IMAGE-NAME python -m fos.pipeline.inference <args>`
 
 ## Flags:
 - --rm: remove the container when execution ends. (optional)
