@@ -7,7 +7,6 @@ WORKDIR /app/src/fos/data/
 # handle the large files for the inference graph
 ARG HF_TOKEN
 # download the scinobo inference graph and the graph embeddings from HF organization
-RUN wget --header="Authorization: Bearer ${HF_TOKEN}" https://huggingface.co/datasets/iNoBo/scinobo-fos-graph-embeddings/resolve/main/graph_embeddings_with_L6_21_12_2022.p?download=true -O graph_embeddings_with_L6_21_12_2022.p
 RUN wget --header="Authorization: Bearer ${HF_TOKEN}" https://huggingface.co/datasets/iNoBo/scinobo-fos-inference-graph/resolve/main/scinobo_inference_graph.json?download=true -O scinobo_inference_graph.json
 
 WORKDIR /app
@@ -25,6 +24,8 @@ SHELL ["conda", "run", "-n", "docker_env", "/bin/bash", "-c"]
 # Adjust the PyTorch and CUDA versions as needed
 # Check https://pytorch.org/get-started/locally/ for the correct command for your needs
 RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia -y
+RUN conda install -c pytorch faiss-cpu=1.8.0
+RUN conda install -c conda-forge libstdcxx-ng
 
 # COPY DESCRIPTIONS
 # install dependencies

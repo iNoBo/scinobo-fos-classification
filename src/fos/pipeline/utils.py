@@ -10,29 +10,23 @@ Note: This script requires the installation of various libraries such as spacy, 
 """
 
 import os
-import pickle
+import json
 import numpy as np
 import re
 import pycountry
 import nltk
 import torch
 import importlib.resources
-
-# this is for blocking tensorflow -- it reserves all the gpu memory for some reason
-# os.environ["CUDA_VISIBLE_DEVICES"] = "" 
-
+import faiss
 import spacy
 
 from nltk.stem import WordNetLemmatizer
 from gensim.parsing.preprocessing import preprocess_string, strip_multiple_whitespaces, strip_punctuation
-
-# download stopwords
-# nltk.download('stopwords')
-# nltk.download('punkt')
-
+from usearch.index import Index
 from nltk.corpus import stopwords
 from nltk.util import ngrams
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import SentenceTransformer
+from sentence_transformers.quantization import quantize_embeddings
 from sklearn.cluster import AgglomerativeClustering
 
 
@@ -87,13 +81,18 @@ class TextProcessor():
         self.bioclean = lambda t: re.sub('[.,?;*!%^&_+():-\[\]{}]', '',
                                      t.replace('"', '').replace('/', ' ').replace('\\', '').replace("'",
                                                                                                     '').strip().lower())                                                                                          
-        self.input_embeddings = os.path.join(DATA_PATH, 'graph_embeddings_with_L6_21_12_2022.p')
-        self.embeddings = self.load_embeddings()
-        self.node2idx = {key: idx for idx, key in enumerate(self.embeddings.keys())}
+        ############################################################
+        # no need to load the quantized embeddings. We will use the FAISS and usearch indices
+        # self.input_embeddings = os.path.join(DATA_PATH, 'graph_embeddings_quantized_020424.pt')
+        # self.embeddings = self.load_embeddings()
+        ############################################################
+        with open(os.path.join(DATA_PATH, 'word2idx.json'), 'r') as fin:
+            self.node2idx = json.load(fin)
         self.idx2node = {v: k for k, v in self.node2idx.items()}
-
-        # convert self.input_embeddings to a tensor
-        self.embeddings = torch.tensor(list(self.embeddings.values()), device=self.device)
+        ############################################################
+        self.binary_index: faiss.IndexBinaryFlat = faiss.read_index_binary(os.path.join(DATA_PATH, 'graph_embeddings_faiss_ubinary.index'))
+        self.int8_view = Index.restore(os.path.join(DATA_PATH, "graph_embeddings_usearch_int8.index"), view=True)
+        ############################################################
         my_langs = [
             'de', 'it', 'cs', 'da', 'lv', 'es', 'fr', 'bg', 'pl', 'nl', 'el', 'fi', 'sv', 'ro', 'ga', 'hu',
             'sk', 'hr', 'pt', 'no', 'sl', 'lt', 'lb', 'et', 'mt', 'so', 'he', 'tr', 'ru', 'th',
@@ -199,8 +198,7 @@ class TextProcessor():
         Returns:
             embeddings (object): The loaded embeddings.
         """
-        with open(self.input_embeddings, 'rb') as fin:
-            embeddings = pickle.load(fin)
+        embeddings = torch.load(self.input_embeddings, map_location=self.device)
         return embeddings
 
     def preprocess(self, x):
@@ -300,16 +298,31 @@ class TextProcessor():
 
         Raises:
             RuntimeError: If there is an error in encoding the query.
-
         """
         try:
             query_embedding = self.embedder.encode(query, convert_to_tensor=True, device=self.device, show_progress_bar=False)
         except RuntimeError:
             print('Error in encoding query')
             return []
-        hits = util.semantic_search(query_embedding, self.embeddings, top_k=k, query_chunk_size=1000)
+        ############################################################
+        query_embedding_ubinary = quantize_embeddings(query_embedding, "ubinary")
+        # Search the binary index
+        _, binary_ids = self.binary_index.search(query_embedding_ubinary, k * 4) # rescore multiplier --> 4
+        int8_embeddings = self.int8_view[binary_ids.reshape(-1)].astype(int)
+        int8_embeddings = int8_embeddings.reshape(len(query), k * 4, -1)
+        scores = torch.mul(query_embedding.unsqueeze(1), torch.tensor(int8_embeddings)).sum(-1)
+        # scores = query_embedding @ int8_embeddings.T # matrix multiplication
+        indices = (-scores).argsort()[:, :k]
+        top_k_indices = binary_ids[:, indices[0, :]]                                             
+        # top_k_scores = scores[:, indices[0, :]]
+        # search for similar nodes using the quantized embeddings
+        ############################################################
+        # this is the original code
+        # hits = util.semantic_search(query_embedding, self.embeddings, top_k=k, query_chunk_size=1000)
         # unpack hits and convert to nodes
-        return [[(q, self.idx2node[h['corpus_id']]) for h in hit if h['score'] >= 0.8] for q, hit in zip(query, hits)]
+        # return [[(q, self.idx2node[h['corpus_id']]) for h in hit if h['score'] >= 0.8] for q, hit in zip(query, top_k_indices.tolist())]
+        ############################################################    
+        return [[(q, self.idx2node[h]) for h in hit] for q, hit in zip(query, top_k_indices.tolist())]
 
     def cluster_kws(self, corpus_words, thresh):
         """
