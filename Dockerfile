@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:24.1.2-0
+FROM pytorch/pytorch:2.2.2-cuda12.1-cudnn8-runtime
 
 RUN chmod 1777 /tmp
 
@@ -14,17 +14,6 @@ WORKDIR /app
 
 # Copy only the requirements file, to cache the installation of dependencies
 COPY requirements.txt /app/requirements.txt
-
-# Create a Conda environment
-RUN conda create -n docker_env python=3.11 -y
-
-# Activate the Conda environment
-SHELL ["conda", "run", "-n", "docker_env", "/bin/bash", "-c"]
-
-# Install PyTorch with CUDA support
-# Adjust the PyTorch and CUDA versions as needed
-# Check https://pytorch.org/get-started/locally/ for the correct command for your needs
-RUN conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia -y
 
 # COPY DESCRIPTIONS
 # install dependencies
