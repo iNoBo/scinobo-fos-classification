@@ -1,0 +1,34 @@
+name: Build and Push Docker Image for scinobo-fos-classification  # Name of the workflow
+
+# Event triggers (push to specific branches)
+on:
+  push:
+    branches:
+      - main  # Trigger on pushes to the 'main' branch
+      - release/**  # Trigger on pushes to any 'release/' branch
+
+# Define jobs
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu environment
+
+    # Steps to be executed within this job
+    steps:
+      # Step to check out the code
+      - uses: actions/checkout@v3
+        name: Check out code
+
+      # Step to build and push a Docker image
+      - uses: mr-smithers-excellent/docker-build-push@v6
+        name: Build and push Docker image
+        with:
+          image: intelligencenoborders/inobo  # Confirm this is your image name
+          tags: scinobo-fos-classification  # This is the Docker tag
+          registry: docker.io  # Ensure this is your Docker registry
+          dockerfile: Dockerfile  # Dockerfile to use
+          username: ${{ secrets.DOCKER_USERNAME }}  # Docker username
+          password: ${{ secrets.DOCKER_PASSWORD }}  # Docker password
+      
+      # Step to run Pytest in Docker -- do not use this right now, since it requires to load models for testing.
+      # - name: Run Pytest in Docker
+      #   run: docker run --rm -w /app intelligencenoborders/inobo:scinobo-fos-classification pytest tests/
