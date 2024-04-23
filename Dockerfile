@@ -4,6 +4,9 @@ RUN chmod 1777 /tmp
 
 WORKDIR /app/src/fos/data/
 
+# Install wget
+RUN apt-get update && apt-get install -y wget
+
 # handle the large files for the inference graph
 ARG HF_TOKEN
 # download the scinobo inference graph and the graph embeddings from HF organization
