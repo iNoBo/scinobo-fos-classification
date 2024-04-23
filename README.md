@@ -40,7 +40,7 @@ The flag -t specifies the name of the image that will be created with an optiona
 - The location of the Dockerfile is the current directory.
 
 ## Run the FastAPI server for FoS
-`docker run  --rm --name scinobo-fos-api -p 1997:1997 scinobo-fos conda run --no-capture-output -n docker_env uvicorn fos.server.api:app --host 0.0.0.0 --port 1997`
+`docker run --rm --gpus all --name scinobo-fos-api -p 1997:1997 scinobo-fos uvicorn fos.server.api:app --host 0.0.0.0 --port 1997`
 
 **NOTE**: scinobo-fos-api is the name of the container
 **NOTE**: the docker is exposing only the port 1997
