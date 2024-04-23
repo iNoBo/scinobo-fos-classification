@@ -2,10 +2,12 @@ name: Build and Push Docker Image for scinobo-fos-classification  # Name of the 
 
 # Event triggers (push to specific branches)
 on:
-  push:
-    branches:
-      - main  # Trigger on pushes to the 'main' branch
-      - 'releases/**'  # Trigger on pushes to any 'release/' branch
+  # push:
+  #   branches:
+  #     - main  # Trigger on pushes to the 'main' branch
+  release:
+    types:
+      - published
 
 # Define jobs
 jobs:
