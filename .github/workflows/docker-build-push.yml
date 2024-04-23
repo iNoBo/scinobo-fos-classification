@@ -6,8 +6,7 @@ on:
   #   branches:
   #     - main  # Trigger on pushes to the 'main' branch
   release:
-    types:
-      - published
+    types: [published, created, prereleased]
 
 # Define jobs
 jobs:
