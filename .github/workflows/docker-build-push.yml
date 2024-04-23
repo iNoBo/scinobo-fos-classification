@@ -28,6 +28,7 @@ jobs:
           dockerfile: Dockerfile  # Dockerfile to use
           username: ${{ secrets.DOCKER_USERNAME }}  # Docker username
           password: ${{ secrets.DOCKER_PASSWORD }}  # Docker password
+          buildArgs: HF_TOKEN=${{ secrets.HUGGINGFACE_TOKEN }}
       
       # Step to run Pytest in Docker -- do not use this right now, since it requires to load models for testing.
       # - name: Run Pytest in Docker
