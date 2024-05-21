@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y wget
 # handle the large files for the inference graph
 ARG HF_TOKEN
 # download the scinobo inference graph and the graph embeddings from HF organization
-RUN wget --header="Authorization: Bearer ${HF_TOKEN}" https://huggingface.co/datasets/iNoBo/scinobo-fos-graph-embeddings/resolve/main/graph_embeddings_with_L6_21_12_2022.p?download=true -O graph_embeddings_with_L6_21_12_2022.p
-RUN wget --header="Authorization: Bearer ${HF_TOKEN}" https://huggingface.co/datasets/iNoBo/scinobo-fos-inference-graph/resolve/main/scinobo_inference_graph.json?download=true -O scinobo_inference_graph.json
+RUN wget https://huggingface.co/datasets/iNoBo/scinobo-fos-graph-embeddings/resolve/main/graph_embeddings_with_L6_21_12_2022.p?download=true -O graph_embeddings_with_L6_21_12_2022.p
+RUN wget https://huggingface.co/datasets/iNoBo/scinobo-fos-inference-graph/resolve/main/scinobo_inference_graph.json?download=true -O scinobo_inference_graph.json
 
 WORKDIR /app
 
