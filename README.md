@@ -11,30 +11,13 @@ The classifier works with a dynamic hierarchical taxonomy. The taxonomy has 6 Le
 - [SCINOBO: a novel system classifying scholarly communication in a dynamically constructed hierarchical Field-of-Science taxonomy](https://www.frontiersin.org/articles/10.3389/frma.2023.1149834/full)
 - [SciNoBo: A Hierarchical Multi-Label Classifier of Scientific Publications](https://dl.acm.org/doi/10.1145/3487553.3524677)
 
-## Contents of repository
-- input_files: Directory which contains test files for a demo. If you want to test the docker, then use this folder as the input volume to the docker when you run it. E.g. -v path/to/input_files:
-- Dockerfile: Contains the commands for building the docker
-- inference.py: Contains the code responsible for the inference procedure. This is the main script.
-- input_schema.json: Example schema for how the input should be.
-- L2_to_L1.json: Mapping from the L2 FoS fields to L1
-- L3_to_L2.json: Mapping from the L3 FoS fields to L2
-- L3_to_L4.json: Mapping from the L3 FoS fields to L4
-- L4_to_L3.json: Mapping from the L4 FoS fields to L3
-- my_graph.py: Contains the code for managing the inference graph of SciNoBo
-- output_schema.json: Contains the output schema of the predictions
-- requirements.txt: The python packages required.
-- scinobo_inference_graph.p: The SciNoBo inference graph
-- utils.py: Contains code for utilities
-- venue_parser.py: Contains code for parsing the venue names
-- venue_maps.p: Contains the abbreviations of the venues
-
 # Commands to build and run the docker
 
 ## Create docker image
 Use the following command to create a docker image.
 The flag -t specifies the name of the image that will be created with an optional tag (for example its version).
 
-`docker build --build-arg HF_TOKEN=<AUTHORIZED ORG HF TOKEN> --tag scinobo-fos:latest .`
+`docker build --build-arg --tag scinobo-fos:latest .`
 
 - The name of the image in this case is scinobo-fos:latest.
 - The location of the Dockerfile is the current directory.
