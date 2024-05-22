@@ -37,9 +37,15 @@ RUN mkdir /output_files
 EXPOSE 1997
 
 # change the working directory
-WORKDIR /src
+# WORKDIR /src
 
-COPY ./src .
+# COPY ./src .
+
+# Copy the rest of your application
+COPY . /app
+
+# Change the working directory
+WORKDIR /app/src
 
 # ENTRYPOINT ["python3", "inference.py"]
 # Initialize
