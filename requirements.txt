@@ -18,3 +18,4 @@ uvicorn==0.29.0
 openpyxl==3.1.2
 pytest==8.1.1
 gradio
+scipy<1.13
