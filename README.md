@@ -25,14 +25,13 @@ The flag -t specifies the name of the image that will be created with an optiona
 ## Run the FastAPI server for FoS
 `docker run --rm --gpus all --name scinobo-fos-api -p 1997:1997 scinobo-fos uvicorn fos.server.api:app --host 0.0.0.0 --port 1997`
 
-**NOTE**: scinobo-fos-api is the name of the container
-**NOTE**: the docker is exposing only the port 1997
-**NOTE**: the conda environment created through the dockerfile. You can change the name from the dockerfile.
+- **NOTE**: scinobo-fos-api is the name of the container
+- **NOTE**: the docker is exposing only the port 1997
 
 ## Run image container for bulk inference
 To run a container with the bulk inference, the following command is needed:
 
-`docker run <--rm> -i <--name CONTAINER-NAME> -v path/to/input/local/data:/input_files -v path/to/output/local/data:/output_files IMAGE-NAME python -m fos.pipeline.inference <args>`
+`docker run <--rm> --gpus all -i <--name CONTAINER-NAME> -v path/to/input/local/data:/input_files -v path/to/output/local/data:/output_files IMAGE-NAME python -m fos.pipeline.inference <args>`
 
 ## Flags:
 - --rm: remove the container when execution ends. (optional)
