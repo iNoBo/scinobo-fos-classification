@@ -7,6 +7,7 @@ __pycache__/
 graph_embeddings_with_L6_21_12_2022.p
 scinobo_inference_graph.json
 sentence-transformers_all-mpnet-base-v2
+models--sentence-transformers--all-mpnet-base-v2
 
 # C extensions
 *.so
