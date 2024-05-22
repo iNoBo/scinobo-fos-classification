@@ -17,7 +17,7 @@ The classifier works with a dynamic hierarchical taxonomy. The taxonomy has 6 Le
 Use the following command to create a docker image.
 The flag -t specifies the name of the image that will be created with an optional tag (for example its version).
 
-`docker build --build-arg --tag scinobo-fos:latest .`
+`docker build --tag scinobo-fos:latest .`
 
 - The name of the image in this case is scinobo-fos:latest.
 - The location of the Dockerfile is the current directory.
