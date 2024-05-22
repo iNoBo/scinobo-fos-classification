@@ -30,4 +30,4 @@ jobs:
       
       # Step to run Pytest in Docker -- do not use this right now, since it requires to load models for testing.
       - name: Run Pytest in Docker
-        run: docker run --rm -w /app intelligencenoborders/scinobo-fos-classification pytest tests/api_tests/
+        run: docker run --rm -w /app intelligencenoborders/scinobo-fos-classification pytest /tests/api_tests/
