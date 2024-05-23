@@ -64,7 +64,7 @@ with gr.Blocks() as text_analysis:
     cit_veunes_input = gr.Textbox(label="Citation Venues", placeholder="Enter the venues that cite the publication, separated by commas")
     process_text_button = gr.Button("Process")
     text_output = gr.JSON(label="Output")
-    examples = gr.Examples(
+    gr.Examples(
         [
             [
                "10.18653/v1/w19-5032",
