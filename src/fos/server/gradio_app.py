@@ -54,39 +54,6 @@ def analyze_input(
 
 
 # Define the interface for the first tab (Text Analysis)
-# id_input = gr.Textbox(label="ID (e.g. DOI)", placeholder="Enter an ID for the publication. At this demo, it is only used for reference.")
-# title_input = gr.Textbox(label="Title", placeholder="Enter the title of the publication")
-# abstract_input = gr.Textbox(label="Abstract", placeholder="Enter the abstract of the publication")
-# pub_venue_input = gr.Textbox(label="Publication Venue", placeholder="Enter the publication venue that the publication was published")
-# ref_venues_input = gr.Textbox(label="Reference Venues", placeholder="Enter the venues that the publication references, separated by commas")
-# cit_veunes_input = gr.Textbox(label="Citation Venues", placeholder="Enter the venues that cite the publication, separated by commas")
-
-
-# # Convert the tab into one interface
-# with gr.Blocks() as demo:
-#     gr.Interface(
-#         fn=analyze_input, 
-#         inputs=[id_input, title_input, abstract_input, pub_venue_input, ref_venues_input, cit_veunes_input], 
-#         outputs="json", 
-#         title="SciNoBo FoS Classification",
-#         description="SciNoBo FoS is a novel classification system of publications to predefined Field of Science (FoS) taxonomies, leveraging the structural properties of a publication (citations, references) organized in a multilayer network.",
-#         examples=[
-#             [
-#                 "10.18653/v1/w19-5032",
-#                 "Embedding Biomedical Ontologies by Jointly Encoding Network Structure and Textual Node Descriptors",
-#                 "Network Embedding (NE) methods, which map network nodes to low-dimensional feature vectors, have wide applications in network analysis and bioinformatics. Many existing NE methods rely only on network structure, overlooking other information associated with the nodes, e.g., text describing the nodes. Recent attempts to combine the two sources of information only consider local network structure. We extend NODE2VEC, a well-known NE method that considers broader network structure, to also consider textual node descriptors using recurrent neural encoders. Our method is evaluated on link prediction in two networks derived from UMLS. Experimental results demonstrate the effectiveness of the proposed approach compared to previous work.",
-#                 "proceedings of the bionlp workshop and shared task",
-#                 "acl,acl,aimag,arxiv artificial intelligence,arxiv computation and language,arxiv machine learning,arxiv social and information networks,briefings in bioinformatics,comparative and functional genomics,conference of the european chapter of the association for computational linguistics,cvpr,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,eswc,iclr,icml,kdd,kdd,kdd,kdd",
-#                 "naacl,nips,nucleic acids res,pacific symposium on biocomputing,physica a statistical mechanics and its applications,proceedings of the acm conference on bioinformatics computational biology and health informatics,sci china ser f,the web conference"
-#             ]
-#         ]
-#     )
-
-# # Launch the interface
-# demo.queue().launch(server_name="0.0.0.0", server_port=7860)
-
-
-# Define the interface for the first tab (Text Analysis)
 with gr.Blocks() as text_analysis:
     gr.Markdown("### SciNoBo Field of Science (FoS) Classification")
     id_input = gr.Textbox(label="ID (e.g. DOI)", placeholder="Enter an ID for the publication. At this demo, it is only used for reference.")
@@ -97,6 +64,18 @@ with gr.Blocks() as text_analysis:
     cit_veunes_input = gr.Textbox(label="Citation Venues", placeholder="Enter the venues that cite the publication, separated by commas")
     process_text_button = gr.Button("Process")
     text_output = gr.JSON(label="Output")
+    gr.Examples(
+        [
+            [
+               "10.18653/v1/w19-5032",
+                "Embedding Biomedical Ontologies by Jointly Encoding Network Structure and Textual Node Descriptors",
+                "Network Embedding (NE) methods, which map network nodes to low-dimensional feature vectors, have wide applications in network analysis and bioinformatics. Many existing NE methods rely only on network structure, overlooking other information associated with the nodes, e.g., text describing the nodes. Recent attempts to combine the two sources of information only consider local network structure. We extend NODE2VEC, a well-known NE method that considers broader network structure, to also consider textual node descriptors using recurrent neural encoders. Our method is evaluated on link prediction in two networks derived from UMLS. Experimental results demonstrate the effectiveness of the proposed approach compared to previous work.",
+                "proceedings of the bionlp workshop and shared task",
+                "acl,acl,aimag,arxiv artificial intelligence,arxiv computation and language,arxiv machine learning,arxiv social and information networks,briefings in bioinformatics,comparative and functional genomics,conference of the european chapter of the association for computational linguistics,cvpr,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,eswc,iclr,icml,kdd,kdd,kdd,kdd",
+                "naacl,nips,nucleic acids res,pacific symposium on biocomputing,physica a statistical mechanics and its applications,proceedings of the acm conference on bioinformatics computational biology and health informatics,sci china ser f,the web conference"
+            ]
+        ]
+    )
     process_text_button.click(analyze_input, inputs=[id_input, title_input, abstract_input, pub_venue_input, ref_venues_input, cit_veunes_input], outputs=[text_output])
 
 
