@@ -64,19 +64,17 @@ with gr.Blocks() as text_analysis:
     cit_veunes_input = gr.Textbox(label="Citation Venues", placeholder="Enter the venues that cite the publication, separated by commas")
     process_text_button = gr.Button("Process")
     text_output = gr.JSON(label="Output")
-    gr.Examples(
+    process_text_button.click(analyze_input, inputs=[id_input, title_input, abstract_input, pub_venue_input, ref_venues_input, cit_veunes_input], outputs=[text_output])
+    examples = gr.Examples(
         [
-            [
-               "10.18653/v1/w19-5032",
-                "Embedding Biomedical Ontologies by Jointly Encoding Network Structure and Textual Node Descriptors",
-                "Network Embedding (NE) methods, which map network nodes to low-dimensional feature vectors, have wide applications in network analysis and bioinformatics. Many existing NE methods rely only on network structure, overlooking other information associated with the nodes, e.g., text describing the nodes. Recent attempts to combine the two sources of information only consider local network structure. We extend NODE2VEC, a well-known NE method that considers broader network structure, to also consider textual node descriptors using recurrent neural encoders. Our method is evaluated on link prediction in two networks derived from UMLS. Experimental results demonstrate the effectiveness of the proposed approach compared to previous work.",
-                "proceedings of the bionlp workshop and shared task",
-                "acl,acl,aimag,arxiv artificial intelligence,arxiv computation and language,arxiv machine learning,arxiv social and information networks,briefings in bioinformatics,comparative and functional genomics,conference of the european chapter of the association for computational linguistics,cvpr,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,eswc,iclr,icml,kdd,kdd,kdd,kdd",
-                "naacl,nips,nucleic acids res,pacific symposium on biocomputing,physica a statistical mechanics and its applications,proceedings of the acm conference on bioinformatics computational biology and health informatics,sci china ser f,the web conference"
-            ]
+            "10.18653/v1/w19-5032",
+            "Embedding Biomedical Ontologies by Jointly Encoding Network Structure and Textual Node Descriptors",
+            "Network Embedding (NE) methods, which map network nodes to low-dimensional feature vectors, have wide applications in network analysis and bioinformatics. Many existing NE methods rely only on network structure, overlooking other information associated with the nodes, e.g., text describing the nodes. Recent attempts to combine the two sources of information only consider local network structure. We extend NODE2VEC, a well-known NE method that considers broader network structure, to also consider textual node descriptors using recurrent neural encoders. Our method is evaluated on link prediction in two networks derived from UMLS. Experimental results demonstrate the effectiveness of the proposed approach compared to previous work.",
+            "proceedings of the bionlp workshop and shared task",
+            "acl,acl,aimag,arxiv artificial intelligence,arxiv computation and language,arxiv machine learning,arxiv social and information networks,briefings in bioinformatics,comparative and functional genomics,conference of the european chapter of the association for computational linguistics,cvpr,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,eswc,iclr,icml,kdd,kdd,kdd,kdd",
+            "naacl,nips,nucleic acids res,pacific symposium on biocomputing,physica a statistical mechanics and its applications,proceedings of the acm conference on bioinformatics computational biology and health informatics,sci china ser f,the web conference"
         ]
     )
-    process_text_button.click(analyze_input, inputs=[id_input, title_input, abstract_input, pub_venue_input, ref_venues_input, cit_veunes_input], outputs=[text_output])
 
 
 # Combine the tabs into one interface
