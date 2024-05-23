@@ -41,13 +41,6 @@ To run a container with the bulk inference, the following command is needed:
 
 **Reminder**: If you want to test the docker, you need to use the following path as an input path --> -v path/to/input_files
 
-## Example
-
-`docker run  --rm --name scinobo-fos-bulk -v path/to/input/local/data/:/input_files -v path/to/output/local/data:/output_files scinobo-fos conda run --no-capture-output -n docker_env python -m fos.pipeline.inference --file_type="parquet"`
-
-- **path/to/input/local/data/** --> where the input files exist in the host
-- **path/to/output/local/data** --> a directory in the host where you want the container to save the output
-
 ## Miscellaneous
 - **If you want to connect to the docker -->** `docker exec -it <container_name> /bin/bash`
 - **If you want to see the logs of the docker -->** `docker logs <container_name>`
