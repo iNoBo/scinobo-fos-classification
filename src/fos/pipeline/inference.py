@@ -67,8 +67,11 @@ DATA_PATH = os.path.join(importlib.resources.files(__package__.split(".")[0]), "
 
 # initializations
 venue_parser = VenueParser(abbreviation_dict=os.path.join(DATA_PATH, 'venues_maps.p'))
+print("Loaded the venue parser.")
 my_graph = MultiGraph(os.path.join(DATA_PATH, 'scinobo_inference_graph.json'))
+print("Loaded the inference graph.")
 text_processor = TextProcessor()
+print("Initialized the text processor..")
 
 # load mappings
 with open(os.path.join(DATA_PATH, 'L2_to_L1.json'), 'r') as fin:

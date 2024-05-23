@@ -78,7 +78,9 @@ class TextProcessor():
         print(f'Using device: {self.device}')
         self.cwd = os.getcwd()
         self.embedder = SentenceTransformer('all-mpnet-base-v2', device=self.device, cache_folder=DATA_PATH)
+        print("Embedder loaded")
         self.spacy_model = spacy.load("en_core_web_sm")
+        print("Spacy model loaded")
         self.lemmatizer_to_use = my_lemmatizer
         if self.lemmatizer_to_use == 'spacy':
             self.lemmatizer = self.spacy_model
@@ -89,11 +91,13 @@ class TextProcessor():
                                                                                                     '').strip().lower())                                                                                          
         self.input_embeddings = os.path.join(DATA_PATH, 'graph_embeddings_with_L6_21_12_2022.p')
         self.embeddings = self.load_embeddings()
+        print("Embeddings loaded")
         self.node2idx = {key: idx for idx, key in enumerate(self.embeddings.keys())}
         self.idx2node = {v: k for k, v in self.node2idx.items()}
 
         # convert self.input_embeddings to a tensor
         self.embeddings = torch.tensor(list(self.embeddings.values()), device=self.device)
+        print("Embeddings converted to tensor")
         my_langs = [
             'de', 'it', 'cs', 'da', 'lv', 'es', 'fr', 'bg', 'pl', 'nl', 'el', 'fi', 'sv', 'ro', 'ga', 'hu',
             'sk', 'hr', 'pt', 'no', 'sl', 'lt', 'lb', 'et', 'mt', 'so', 'he', 'tr', 'ru', 'th',
