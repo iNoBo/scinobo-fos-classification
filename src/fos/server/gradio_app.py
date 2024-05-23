@@ -83,4 +83,4 @@ with gr.Blocks() as demo:
     )
 
 # Launch the interface
-demo.launch()
+demo.queue().launch()
