@@ -73,7 +73,8 @@ with gr.Blocks() as text_analysis:
             "proceedings of the bionlp workshop and shared task",
             "acl,acl,aimag,arxiv artificial intelligence,arxiv computation and language,arxiv machine learning,arxiv social and information networks,briefings in bioinformatics,comparative and functional genomics,conference of the european chapter of the association for computational linguistics,cvpr,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,emnlp,eswc,iclr,icml,kdd,kdd,kdd,kdd",
             "naacl,nips,nucleic acids res,pacific symposium on biocomputing,physica a statistical mechanics and its applications,proceedings of the acm conference on bioinformatics computational biology and health informatics,sci china ser f,the web conference"
-        ]
+        ],
+        inputs=[id_input, title_input, abstract_input, pub_venue_input, ref_venues_input, cit_veunes_input]
     )
 
 
