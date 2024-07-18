@@ -79,7 +79,7 @@ with gr.Blocks() as text_analysis:
 
 # Define the interface for the second tab (DOI Mode)
 with gr.Blocks() as doi_mode:
-    gr.Markdown("### SciNoBo Field of Science (FoS) Taxonomy Mapper")
+    gr.Markdown("### SciNoBo Field of Science (FoS) Classification")
     doi_input = gr.Textbox(label="DOI", placeholder="Enter a valid Digital Object Identifier", interactive=False)
     gr.HTML("<span style='color:red;'>This functionality is not ready yet.</span>")
 
