@@ -77,10 +77,15 @@ with gr.Blocks() as text_analysis:
         inputs=[id_input, title_input, abstract_input, pub_venue_input, ref_venues_input, cit_veunes_input]
     )
 
+# Define the interface for the second tab (DOI Mode)
+with gr.Blocks() as doi_mode:
+    gr.Markdown("### SciNoBo Field of Science (FoS) Taxonomy Mapper")
+    doi_input = gr.Textbox(label="DOI", placeholder="Enter a valid Digital Object Identifier", interactive=False)
+    gr.HTML("<span style='color:red;'>This functionality is not ready yet.</span>")
 
 # Combine the tabs into one interface
 with gr.Blocks() as demo:
-    gr.TabbedInterface([text_analysis], ["Enter Metadata Mode"])
+    gr.TabbedInterface([text_analysis, doi_mode], ["Enter Metadata Mode", "Enter DOI Mode"])
 
 # Launch the interface
 demo.queue().launch(server_name="0.0.0.0", server_port=7860)
