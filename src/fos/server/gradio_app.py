@@ -55,7 +55,7 @@ def analyze_input(
 
 # Define the interface for the first tab (Text Analysis)
 with gr.Blocks() as text_analysis:
-    gr.Markdown("### SciNoBo Field of Science (FoS) Classification")
+    gr.Markdown("### SciNoBo Field of Science (FoS) Classification - Metadata Mode")
     id_input = gr.Textbox(label="ID (e.g. DOI)", placeholder="Enter an ID for the publication. At this demo, it is only used for reference.")
     title_input = gr.Textbox(label="Title", placeholder="Enter the title of the publication")
     abstract_input = gr.Textbox(label="Abstract", placeholder="Enter the abstract of the publication")
@@ -79,13 +79,13 @@ with gr.Blocks() as text_analysis:
 
 # Define the interface for the second tab (DOI Mode)
 with gr.Blocks() as doi_mode:
-    gr.Markdown("### SciNoBo Field of Science (FoS) Classification")
+    gr.Markdown("### SciNoBo Field of Science (FoS) Classification - DOI Mode")
     doi_input = gr.Textbox(label="DOI", placeholder="Enter a valid Digital Object Identifier", interactive=False)
     gr.HTML("<span style='color:red;'>This functionality is not ready yet.</span>")
 
 # Combine the tabs into one interface
 with gr.Blocks() as demo:
-    gr.TabbedInterface([text_analysis, doi_mode], ["Enter Metadata Mode", "Enter DOI Mode"])
+    gr.TabbedInterface([text_analysis, doi_mode], ["Metadata Mode", "DOI Mode"])
 
 # Launch the interface
 demo.queue().launch(server_name="0.0.0.0", server_port=7860)
