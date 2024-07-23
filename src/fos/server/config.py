@@ -1,3 +1,0 @@
-BACKEND_IP = '194.177.192.80'
-BACKEND_PORT = 8087
-BACKEND_PATH = '/fos/doimode/'

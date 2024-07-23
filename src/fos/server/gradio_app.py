@@ -6,11 +6,15 @@ This gradio app will be hosted on HF spaces for demo purposes.
 
 """
 
+import os
 import gradio as gr
 import requests as req
-from config import BACKEND_IP, BACKEND_PORT, BACKEND_PATH
 from fos.pipeline.inference import create_payload, infer, process_pred
 
+# Retrieve HF space secrets
+BACKEND_IP = os.getenv('BACKEND_IP')
+BACKEND_PORT = os.getenv('BACKEND_PORT')
+BACKEND_PATH = os.getenv('BACKEND_PATH')
 
 # Define the functions to handle the inputs and outputs
 def analyze_input(
