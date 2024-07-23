@@ -7,7 +7,8 @@ This gradio app will be hosted on HF spaces for demo purposes.
 """
 
 import gradio as gr
-
+import requests as req
+from config import BACKEND_IP, BACKEND_PORT, BACKEND_PATH
 from fos.pipeline.inference import create_payload, infer, process_pred
 
 
@@ -52,6 +53,24 @@ def analyze_input(
         results = {'error': str(e)}
     return results
 
+def analyze_input_doi(
+    doi: str | None
+):
+    if (doi is None):
+        results = {'error': 'Please provide the DOI of the publication'}
+        return results
+    if (doi == ''):
+        results = {'error': 'Please provide the DOI of the publication'}
+        return results
+    try:
+        url = f"http://{BACKEND_IP}:{BACKEND_PORT}{BACKEND_PATH}{doi}"
+        response = req.get(url)
+        response.raise_for_status()
+        results = response.json()
+        return results
+    except Exception as e:
+        results = {'error': str(e)}
+    return results
 
 # Define the interface for the first tab (Text Analysis)
 with gr.Blocks() as text_analysis:
@@ -80,8 +99,10 @@ with gr.Blocks() as text_analysis:
 # Define the interface for the second tab (DOI Mode)
 with gr.Blocks() as doi_mode:
     gr.Markdown("### SciNoBo Field of Science (FoS) Classification - DOI Mode")
-    doi_input = gr.Textbox(label="DOI", placeholder="Enter a valid Digital Object Identifier", interactive=False)
-    gr.HTML("<span style='color:red;'>This functionality is not ready yet.</span>")
+    doi_input = gr.Textbox(label="DOI", placeholder="Enter a valid Digital Object Identifier")
+    process_doi_button = gr.Button("Process")
+    doi_output = gr.JSON(label="Output")
+    process_doi_button.click(analyze_input_doi, inputs=[doi_input], outputs=[doi_output])
 
 # Combine the tabs into one interface
 with gr.Blocks() as demo:
