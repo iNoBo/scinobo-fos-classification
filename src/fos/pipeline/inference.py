@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument("--emphasize", type=str,default='citations',  help="If you want to emphasize in published venue or the cit/refs", required=False)
     parser.add_argument("--only_l4", type=lambda x:bool(distutils.util.strtobool(x)), default=False,  help="If you want to only infer L4", required=False)
     parser.add_argument("--extra_metadata", type=lambda x:bool(distutils.util.strtobool(x)), default=False,  help="If you want to save the metadata from the input file", required=False)
-    parser.add_argument("--file_type", type=str, default='parquet',  help="the file type we will load", required=True)
+    parser.add_argument("--file_type", type=str, default='parquet',  help="the file type we will load", required=False)
     parser.add_argument("--batch_size", type=int, default=10000,  help="The batch size", required=False)
     args = parser.parse_args()
     return args
